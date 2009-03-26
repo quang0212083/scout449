@@ -1,0 +1,140 @@
+.header {
+ margin: 0px;
+ padding: 0px;
+ text-align: center;
+ font-weight: bold;
+ background-color: #7AA1E6;
+}
+
+#lscreen {
+ background-color: #FFFFFF;
+ vertical-align: middle;
+}
+
+.white {
+ color: #FFFFFF;
+}
+
+#out {
+ color: #FFCCCC;
+}
+
+#lwin {
+ height: 600px;
+}
+
+#btime {
+ vertical-align: middle;
+ text-align: right;
+}
+
+.ltblue {
+ background-color: #D6DFF7;
+}
+
+#mheader {
+ border-right: 1px solid #999999;
+ border-bottom: 1px solid #999999;
+}
+
+#menu {
+ border-right: 1px solid #999999;
+ padding: 10px;
+}
+
+#myContent {
+ padding: 10px;
+}
+
+#tlist {
+ border-collapse: collapse;
+}
+
+#mlist {
+ border-collapse: collapse;
+}
+
+.amod {
+ color: #000000;
+}
+
+.dmod {
+ padding: 5px;
+ border: 1px solid #000000;
+ background-color: #FFFFFF;
+}
+
+.tcell {
+ padding: 10px;
+ border: 1px solid #999999;
+}
+
+.mcell {
+ padding: 1px;
+ border: 1px solid #999999;
+ text-align: center;
+}
+
+body {
+ margin: 0px;
+ padding: 0px;
+}
+
+body, input, td, th {
+ font-family: Verdana, Arial, "sans-serif";
+ font-size: 10pt;
+}
+
+body {
+ background-color: #FFFFFF;
+ background-repeat: repeat-x;
+ background-image: url("imgrs?bg.jpg");
+}
+
+#i2 {
+ padding: 10px;
+}
+
+a {
+ text-decoration: none;
+ outline: none;
+ color: #0000FF;
+}
+
+.mtd {
+ background-color: #FFFFFF;
+ border-left: 1px solid #CCCCCC;
+ border-right: 1px solid #CCCCCC;
+ border-top: 1px solid #CCCCCC;
+ border-collapse: collapse;
+ padding: 5px 0px 0px 2px;
+ text-align: center;
+ width: 100px;
+}
+
+a:active {
+ border: none;
+}
+
+form {
+ display: inline;
+}
+
+h1 {
+ font-size: 14pt;
+ margin: 0px;
+ font-weight: bold;
+ color: #1C51A8;
+}
+
+.red {
+ color: #FF0000;
+}
+
+.blue {
+ color: #0000FF;
+}
+
+#loading {
+ display: inline;
+}
