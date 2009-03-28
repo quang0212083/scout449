@@ -43,6 +43,18 @@ var ie7index = 0;
 
 if (isIE7) ie7 = new Array();
 
+function isAdmin() {
+ return (perms & 8) != 0;
+}
+
+function canScore() {
+ return (perms & 2) != 0;
+}
+
+function canWrite() {
+ return (perms & 4) != 0;
+}
+
 function ie7fix(id) {
  // BUG in IE7 - links are broken wihtout a fix
  if (isIE7) ie7[ie7index++] = id;
@@ -167,7 +179,7 @@ function viewTeamList(teams, start, len) {
   }
   team = teams[teamNum];
   if (count % 4 == 0) out += '<tr>';
-  out += '<td class="tcell" align="center" valign="middle" id="ttd' + team.number + '" width=\"140\"><a onclick="return ';
+  out += '<td class="tcell" align="center" valign="middle" id="ttd' + team.number + '" width=\"180\"><a onclick="return ';
   out += 'showTeam(' + team.number + ')" href="#" onmouseover="return setTHL(' + team.number + ')" onmouseout="return ';
   out += 'clearTHL(' + team.number + ')" id="teamlist_' + team.number + '">';
   out += '<img src="thumbnail?team=' + team.number + '" border="0" alt="No Image" />';
@@ -284,15 +296,20 @@ function appendHeaderRow(out) {
 function runLate() {
  load();
  setTitle(3);
- var out = '<form onsubmit="return doLate(this)" action="#">How many minutes is FIRST running late? ';
- out += '<input type="text" name="late" id="late" value="0" size="3" maxlength="3" value="' + late + '"/> <input ';
- out += 'type="submit" value="Run Late" /><\/form>';
+ var out;
+ if (canScore()) {
+  out = '<form onsubmit="return doLate(this)" action="#">How many minutes is FIRST running late? ';
+  out += '<input type="text" name="late" id="late" value="0" size="3" maxlength="3" value="' + late + '"/> <input ';
+  out += 'type="submit" value="Run Late" /><\/form>';
+ } else
+  out = '<font color="#FF0000">This account cannot use the Running Late function.<\/font>';
  setRight(out);
- document.getElementById('late').focus();
+ if (canScore()) document.getElementById('late').focus();
  return stopLoad();
 }
 
 function doLate(form) {
+ if (!canScore()) return false;
  load();
  var val = parseInt(form.late.value);
  if (val == NaN) {
@@ -309,50 +326,56 @@ function doLate(form) {
 function enterMatch(ok) {
  load();
  setTitle(2);
- var out = '<form action="#" onsubmit="return matchEntry(this);"><table cellpadding="2" cellspacing="0" border="0">';
- out += '<tr><td align="right"><b>Time:<\/b><\/td><td><input type="text" id="time" name="time" size="5" maxlength="5"';
- if (lastTime)
-  out += ' value="' + format(lastTime) + '"';
- out += ' /><\/td><td align="right"><b>When:<\/b><\/td><td><select name="when"><option value="0"';
- if (lastWhen == 0) out += ' selected="selected"';
- out += '>Today<\/option><option value="1"';
- if (lastWhen == 1) out += ' selected="selected"';
- out += '>Tomorrow<\/option>' + "\n";
- for (var i = 2; i < 5; i++) {
-  out += '<option value="' + i + '"';
-  if (lastWhen == i) out += ' selected="selected"';
-  out += '>' + i + ' days ahead<\/option>';
+ var out;
+ if (!canScore()) {
+  out = '<font color="#FF0000">This account cannot use the Enter Match function.<\/font>';
+ } else {
+  out = '<form action="#" onsubmit="return matchEntry(this);"><table cellpadding="2" cellspacing="0" border="0">';
+  out += '<tr><td align="right"><b>Time:<\/b><\/td><td><input type="text" id="time" name="time" size="5" maxlength="5"';
+  if (lastTime)
+   out += ' value="' + format(lastTime) + '"';
+  out += ' /><\/td><td align="right"><b>When:<\/b><\/td><td><select name="when"><option value="0"';
+  if (lastWhen == 0) out += ' selected="selected"';
+  out += '>Today<\/option><option value="1"';
+  if (lastWhen == 1) out += ' selected="selected"';
+  out += '>Tomorrow<\/option>' + "\n";
+  for (var i = 2; i < 5; i++) {
+   out += '<option value="' + i + '"';
+   if (lastWhen == i) out += ' selected="selected"';
+   out += '>' + i + ' days ahead<\/option>';
+  }
+  out += '<\/select><\/td><\/tr><tr><td align="right"><b>Match #:<\/b><\/td><td><input type="text" name="num" size="3" ';
+  out += 'maxlength="4" value="' + nextMatchNum + '" /><\/td><td align="right"><b>Label:</b><\/td><td><select name="label">';
+  for (var i = 0; i < labels.length; i++) {
+   out += '<option value="' + i + '"';
+   if (lastLabel == i) out += ' selected="selected"';
+   out += '>' + labels[i] + '<\/option>';
+  }
+  out += "\n" + '<\/select><\/td><\/tr><\/table><table cellpadding="2" cellspacing="0" border="0"><tr>';
+  var o2 = '';
+  for (var i = 0; i < tpa; i++) {
+   out += '<td align="center" class="red">Red ' + (i + 1) + '<\/td>';
+   o2 += '<td align="center" class="blue">Blue ' + (i + 1) + '<\/td>';
+  }
+  out += o2 + "\n";
+  out += '<\/tr><tr>'
+  o2 = '';
+  for (var i = 0; i < tpa; i++) {
+   out += '<td><input type="text" name="red' + (i + 1) + '" size="4" maxlength="5" /><\/td>';
+   o2 += '<td><input type="text" name="blue' + (i + 1) + '" size="4" maxlength="5" /><\/td>';
+  }
+  out += o2 + "\n";
+  out += '<\/tr><tr><td align="center" colspan="6"><input type="submit" value="Enter Match" /><\/td><\/tr><\/table><\/form>';
+  if (ok)
+   out += '<br /><br /><font color="#008000">Match entered successfully.<\/font>';
  }
- out += '<\/select><\/td><\/tr><tr><td align="right"><b>Match #:<\/b><\/td><td><input type="text" name="num" size="3" ';
- out += 'maxlength="4" value="' + nextMatchNum + '" /><\/td><td align="right"><b>Label:</b><\/td><td><select name="label">';
- for (var i = 0; i < labels.length; i++) {
-  out += '<option value="' + i + '"';
-  if (lastLabel == i) out += ' selected="selected"';
-  out += '>' + labels[i] + '<\/option>';
- }
- out += "\n" + '<\/select><\/td><\/tr><\/table><table cellpadding="2" cellspacing="0" border="0"><tr>';
- var o2 = '';
- for (var i = 0; i < tpa; i++) {
-  out += '<td align="center" class="red">Red ' + (i + 1) + '<\/td>';
-  o2 += '<td align="center" class="blue">Blue ' + (i + 1) + '<\/td>';
- }
- out += o2 + "\n";
- out += '<\/tr><tr>'
- o2 = '';
- for (var i = 0; i < tpa; i++) {
-  out += '<td><input type="text" name="red' + (i + 1) + '" size="4" maxlength="5" /><\/td>';
-  o2 += '<td><input type="text" name="blue' + (i + 1) + '" size="4" maxlength="5" /><\/td>';
- }
- out += o2 + "\n";
- out += '<\/tr><tr><td align="center" colspan="6"><input type="submit" value="Enter Match" /><\/td><\/tr><\/table><\/form>';
- if (ok)
-  out += '<br /><br /><font color="#008000">Match entered successfully.<\/font>';
  setRight(out);
- document.getElementById('time').focus();
+ if (canScore()) document.getElementById('time').focus();
  return stopLoad();
 }
 
 function matchEntry(form) {
+ if (!canScore()) return false;
  load();
  var time = form.time.value;
  time = time.split(':');
@@ -574,8 +597,8 @@ function ScheduleItem(time, num, label, status, teams, scores, scoreOne, scoreTw
 var tree = new Array();
 tree[0] = 'teams|showTeamList()';
 tree[1] = 'matches|showMatchList()';
-tree[2] = 'enter match|enterMatch(false)';
-tree[3] = 'late?|runLate()';
+tree[2] = 'enter match|enterMatch(false)|1';
+tree[3] = 'late?|runLate()|1';
 tree[4] = 'favorites|showFavList()';
 
 var favTeams = new Array();
@@ -639,10 +662,13 @@ function writeTree() {
  var node;
  for (i = 0; i < tree.length; i++) {
   node = tree[i].split('|');
-  document.write("<td class=\"mtd\" id=\"mtd" + i + "\" align=\"center\"><a id=\"tree_" + i + "\"");
-  document.write(" onclick=\"return " + node[1] + ";\" onmouseover=\"return setStatus('" + node[0] + "', 'tree_");
-  document.write(i + "');\" href=\"#\" onmouseout=\"return clrStatus('tree_" + i + "');\">" + node[0]);
-  document.write("<\/a><\/td>\n");
+  if (node.length < 3 || canWrite()) {
+   document.write("<td class=\"mtd\" id=\"mtd" + i + "\" align=\"center\" width=\"100\"><a id=\"tree_" + i + "\"");
+   document.write(" onclick=\"return " + node[1] + ";\" onmouseover=\"return setStatus('" + node[0] + "', 'tree_");
+   document.write(i + "');\" href=\"#\" onmouseout=\"return clrStatus('tree_" + i + "');\">" + node[0]);
+   document.write("<\/a><\/td>\n");
+  } else
+   document.write("<td class=\"mtd\" width=\"100\" align=\"center\">" + node[0] + "<\/td>\n");
   ie7fix('tree_' + i);
  }
  window.setTimeout('setTime()', 50);
@@ -757,45 +783,47 @@ function showTeam(num) {
    out += '<tr><td align="right">' + udfs[j] + ': <\/td><td>' + udf[j] + '<\/td><\/tr>';
   out += "<\/table><br />\n";
  }
- out += '<hr /><b>Add/Edit Your Comments:<\/b><br /><b>Rating:</b> &nbsp;' + "\n";
- rate = 0;
- if (index >= 0) rate = ratings[index];
- for (i = 0; i < rate; i++) {
-  out += '<a href="#" id="st' + i + '" onmouseover="return setStatus(\'Rate ' + (i + 1) + '\', \'st' + i + '\');" ';
-  out += 'onmouseout="return clrStatus(\'st' + i + '\');" onclick="return doRate(' + num + ',' + (i + 1) + ');">';
-  out += '<img src="imgrs?star-lit.png" border="0" alt="*" title="Star" height="16" width="16" /><\/a>';
-  ie7fix('st' + i);
+ if (canWrite()) {
+  out += '<hr /><b>Add/Edit Your Comments:<\/b><br /><b>Rating:</b> &nbsp;' + "\n";
+  rate = 0;
+  if (index >= 0) rate = ratings[index];
+  for (i = 0; i < rate; i++) {
+   out += '<a href="#" id="st' + i + '" onmouseover="return setStatus(\'Rate ' + (i + 1) + '\', \'st' + i + '\');" ';
+   out += 'onmouseout="return clrStatus(\'st' + i + '\');" onclick="return doRate(' + num + ',' + (i + 1) + ');">';
+   out += '<img src="imgrs?star-lit.png" border="0" alt="*" title="Star" height="16" width="16" /><\/a>';
+   ie7fix('st' + i);
+  }
+  for (; i < 5; i++) {
+   out += '<a href="#" id="st' + i + '" onmouseover="return setStatus(\'Rate ' + (i + 1) + '\', \'st' + i + '\');" ';
+   out += 'onmouseout="return clrStatus(\'st' + i + '\');" onclick="return doRate(' + num + ',' + (i + 1) + ');">';
+   out += '<img src="imgrs?star-unlit.png" border="0" alt=" " title="No Star" height="16" width="16" /><\/a>';
+   ie7fix('st' + i);
+  }
+  out += "\n" + '<br /><table cellpadding="1" cellspacing="0" border="0">';
+  tUdfs = new Array();
+  if (index >= 0) tUdfs = cUdfs[index];
+  else for (i = 0; i < myUDFs.length; i++)
+   tUdfs[i] = 0;
+  for (i = 0; i < tUdfs.length; i++) {
+   out += '<tr><td align="right">' + udfs[i] + ':<\/td><td><form action="#" onsubmit="return false;">';
+   out += '<input type="text" name="udfv" size="3" maxlength="8" value="' + tUdfs[i] + '" onchange="return !udf(';
+   out += num + ', ' + i + ', this.form);" /><\/form><\/td><\/tr>' + "\n";
+  }
+  comment = '';
+  if (index >= 0) comment = comments[index];
+  out += '<\/table><span id="status">&nbsp;<\/span>';
+  out += '<hr /><b>Comment: </b><form action="#" onsubmit="return setComment(' + num + ', this.com.value)"><br />';
+  out += '<textarea name="com" id="com" rows="5" cols="40" wrap="virtual">' + htmlspecial(unescape(comment));
+  out += '</textarea> <input type="submit" value="Update" /></form><hr /><b>Matches Involving This Team:</b><br />';
+  loadMatches();
+  out += getMatchList(num, 0, 99999);
  }
- for (; i < 5; i++) {
-  out += '<a href="#" id="st' + i + '" onmouseover="return setStatus(\'Rate ' + (i + 1) + '\', \'st' + i + '\');" ';
-  out += 'onmouseout="return clrStatus(\'st' + i + '\');" onclick="return doRate(' + num + ',' + (i + 1) + ');">';
-  out += '<img src="imgrs?star-unlit.png" border="0" alt=" " title="No Star" height="16" width="16" /><\/a>';
-  ie7fix('st' + i);
- }
- out += "\n" + '<br /><table cellpadding="1" cellspacing="0" border="0">';
- tUdfs = new Array();
- if (index >= 0) tUdfs = cUdfs[index];
- else for (i = 0; i < myUDFs.length; i++)
-  tUdfs[i] = 0;
- for (i = 0; i < tUdfs.length; i++) {
-  out += '<tr><td align="right">' + udfs[i] + ':<\/td><td><form action="#" onsubmit="return false;">';
-  out += '<input type="text" name="udfv" size="3" maxlength="8" value="' + tUdfs[i] + '" onchange="return !udf(';
-  out += num + ', ' + i + ', this.form);" /><\/form><\/td><\/tr>' + "\n";
- }
- comment = '';
- if (index >= 0) comment = comments[index];
- out += '<\/table><span id="status">&nbsp;<\/span>';
- out += '<hr /><b>Comment: </b><form action="#" onsubmit="return setComment(' + num + ', this.com.value)"><br />';
- out += '<textarea name="com" id="com" rows="5" cols="40" wrap="virtual">' + htmlspecial(unescape(comment));
- out += '</textarea> <input type="submit" value="Update" /></form><hr /><b>Matches Involving This Team:</b><br />';
- loadMatches();
- out += getMatchList(num, 0, 99999);
  out += '<a onclick="return showTeamList();" onmouseover="return setStatus(\'Team List\', \'tl2\')"';
  out += 'onmouseout="return clrStatus(\'tl2\')" href="#" id="tl2">Return to team list<\/a>';
  ie7fix('tl2');
  setRight(out);
  favLink(favIndex(num) < 0);
- document.getElementById('com').focus();
+ if (canWrite()) document.getElementById('com').focus();
  return stopLoad();
 }
 
@@ -821,7 +849,7 @@ function htmlspecial(toEscape) {
 }
 
 function genRate(rate) {
- out = '';
+ var out = '';
  for (i = 0; i < rate; i++)
   out += '<img src="imgrs?star-lit.png" border="0" alt="*" title="Star" height="16" width="16" /><\/a>';
  var diff = rate - Math.floor(rate);
@@ -847,7 +875,7 @@ function genRate(rate) {
 }
 
 function udf(num, index, form) {
- if (tUdfs.length < 1) return false;
+ if (tUdfs.length < 1 || !canWrite()) return false;
  load();
  var val = parseInt(form.udfv.value);
  if (!val && val != 0) {
@@ -867,12 +895,14 @@ function clrUDF() {
 }
 
 function doRate(num, rating) {
+ if (!canWrite()) return false;
  load();
  rate = rating;
  return updateComment(num);
 }
 
 function setType(num, type) {
+ if (!canWrite()) return false;
  load();
  request('ajax?op=type&team=' + num + '&data=' + escape(types[type]));
  teams[num].type = types[type];
@@ -880,13 +910,13 @@ function setType(num, type) {
 }
 
 function setComment(num, comm) {
- if (tUdfs.length < 1) return false;
+ if (tUdfs.length < 1 || !canWrite()) return false;
  comment = comm;
  return updateComment(num);
 }
 
 function updateComment(num) {
- if (tUdfs.length < 1) return false;
+ if (tUdfs.length < 1 || !canWrite()) return false;
  load();
  if (comment.length < 1)
   request('ajax?op=comm&team=' + num + '&data=' + escape(rate + ',%20,' + tUdfs.join(',')));
