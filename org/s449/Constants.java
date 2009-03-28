@@ -85,7 +85,7 @@ public interface Constants {
 	/**
 	 * The full version of this program.
 	 */
-	public static final String VERSION_FULL = "4.0.1.0";
+	public static final String VERSION_FULL = "4.0.1.1";
 	/**
 	 * The bulk transfer port.
 	 */

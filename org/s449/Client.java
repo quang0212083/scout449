@@ -1,9 +1,21 @@
 package org.s449;
 
 /*
- * Stephen Carlson
- * Montgomery Blair HS - Team 449
- * Scouting Data Collection Program
+ * Scout449 - Scouting Data Collection Program
+ * Made by: The Blair Robot Project, FRC Team 449
+ * 
+ *  Scout449 is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  Scout449 is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with Scout449. If not, see <http://www.gnu.org/licenses/>.
  */
 
 import java.awt.*;
@@ -74,7 +86,13 @@ public class Client extends JPanel implements Runnable {
 		new SimpleDateFormat("yyyy/MM/dd h:mm a"),
 		new SimpleDateFormat("yyyy/MM/dd k:mm"),
 		new SimpleDateFormat("MM/dd/yy h:mm a"),
-		new SimpleDateFormat("MM/dd/yy k:mm")
+		new SimpleDateFormat("MM/dd/yy k:mm"),
+		new SimpleDateFormat("h:mm a MM/dd/yyyy"),
+		new SimpleDateFormat("k:mm MM/dd/yyyy"),
+		new SimpleDateFormat("h:mm a yyyy/MM/dd"),
+		new SimpleDateFormat("k:mm yyyy/MM/dd"),
+		new SimpleDateFormat("h:mm a MM/dd/yy"),
+		new SimpleDateFormat("k:mm MM/dd/yy")
 	};
 
 	/**
@@ -138,7 +156,7 @@ public class Client extends JPanel implements Runnable {
 	 */
 	private ArrayList<ScheduleItem> queue;
 	/**
-	 * The kiosk queue.
+	 * The list of matches at the top.
 	 */
 	private ArrayList<ScheduleItem> kQueue;
 	/**
@@ -977,7 +995,7 @@ public class Client extends JPanel implements Runnable {
 		AppLib.printDebug("Starting main loop");
 		String str, title = null, mm = null, str2; Color col, col2;
 		Iterator<ScheduleItem> it; ScheduleItem item, firstItem = null;
-		int i, index; boolean caps;
+		int i, index; boolean caps, update;
 		while (running) {
 			newDate = System.currentTimeMillis();
 			// synchronize - as few as possible updates
@@ -991,6 +1009,19 @@ public class Client extends JPanel implements Runnable {
 				firstItem = null;
 				title = "";
 				mm = "queue is empty";
+				// the list queue still needs to be updated sometimes!
+				update = false;
+				synchronized (queue) {
+					it = kQueue.iterator();
+					while (it.hasNext()) {
+						item = it.next();
+						if (item != null && !shouldShow(item)) {
+							update = true;
+							break;
+						}
+					}
+				}
+				if (update) updateListQueue();
 				synchronized (queue) {
 					it = queue.iterator();
 					i = 0;
@@ -3219,12 +3250,14 @@ public class Client extends JPanel implements Runnable {
 			// variable initialization
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			String line, token, matchLabel; StringTokenizer str;
-			Date in; long realTime; ScheduleItem match; int matchNum, i, j;
-			Calendar local = Calendar.getInstance();
+			Date in = null; long realTime; ScheduleItem match; int matchNum, i, j;
+			Calendar local = Calendar.getInstance(), forYear = Calendar.getInstance();
 			local.setTimeInMillis(date);
 			LinkedList<ScheduleItem> list = new LinkedList<ScheduleItem>();
 			LinkedList<Integer> teams; char ch;
 			String sur, tm; BitSet counts = new BitSet(2 * ScheduleItem.TPA);
+			for (i = 0; i < formats.length; i++)
+				formats[i].setCalendar(local);
 			while (br.ready()) {
 				line = br.readLine();
 				if (line == null) break;
@@ -3233,14 +3266,19 @@ public class Client extends JPanel implements Runnable {
 				if (line.length() < 1 || line.indexOf(',') < 0) continue;
 				str = new StringTokenizer(line, ",");
 				if (str.countTokens() < 3 + ScheduleItem.TPA * 2) continue;
-				in = null; realTime = 0L;
+				realTime = 0L;
 				token = str.nextToken().trim().toUpperCase();
 				// dates
 				for (i = 0; i < formats.length; i++) {
+					in = null;
 					try {
 						// each format
 						in = formats[i].parse(token);
-						break;
+						forYear.setTime(in);
+						if (forYear.get(Calendar.YEAR) > 1990
+								&& forYear.get(Calendar.YEAR) < 2100)
+							// this is within reason
+							break;
 					} catch (Exception e) { }
 				}
 				if (in == null) continue;
