@@ -9,7 +9,7 @@ import java.security.MessageDigest;
  * @author Stephen Carlson
  * @version 4.0.0
  */
-public class UserData implements Comparable<UserData>, java.io.Serializable {
+public class UserData implements Comparable, java.io.Serializable {
 	private static final long serialVersionUID = 5321978342178349880L;
 
 	/**
@@ -36,7 +36,7 @@ public class UserData implements Comparable<UserData>, java.io.Serializable {
 			md.update(dig);
 			for (int i = 0; i < dig.length; i++)
 				dig[i] = (byte)0;
-			StringBuilder bf = new StringBuilder(dig.length * 2);
+			StringBuffer bf = new StringBuffer(dig.length * 2);
 			dig = md.digest();
 			int hd;
 			// convert to hex string
@@ -173,7 +173,9 @@ public class UserData implements Comparable<UserData>, java.io.Serializable {
 		this.access = access;
 		this.teamNum = teamNum;
 	}
-	public int compareTo(UserData o) {
+	public int compareTo(Object other) {
+		if (!(other instanceof UserData)) return 0;
+		UserData o = (UserData)other;
 		return name.compareTo(o.getName());
 	}
 	public int hashCode() {

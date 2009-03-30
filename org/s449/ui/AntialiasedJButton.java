@@ -12,9 +12,6 @@ public class AntialiasedJButton extends JButton {
 		super(text);
 	}
 	public void paint(Graphics g) {
-		if (g instanceof Graphics2D)
-			((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-				RenderingHints.VALUE_ANTIALIAS_ON);
 		super.paint(g);
 	}
 	public void update(Graphics g) {

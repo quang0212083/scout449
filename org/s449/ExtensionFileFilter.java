@@ -9,12 +9,12 @@ import java.util.Hashtable;
 import javax.swing.filechooser.FileFilter;
 
 public class ExtensionFileFilter extends FileFilter {
-	private Hashtable<String, ExtensionFileFilter> filters = null;
+	private Hashtable filters = null;
 	private String description = null;
 	private String fullDescription = null;
 	private boolean useExtensionsInDescription = true;
 	public ExtensionFileFilter() {
-		this.filters = new Hashtable<String, ExtensionFileFilter>(5);
+		this.filters = new Hashtable(5);
 	}
 	public ExtensionFileFilter(String extension, String description) {
 		this();
@@ -53,7 +53,7 @@ public class ExtensionFileFilter extends FileFilter {
 	}
 	public void addExtension(String extension) {
 		if(filters == null) {
-			filters = new Hashtable<String, ExtensionFileFilter>(5);
+			filters = new Hashtable(5);
 		}
 		filters.put(extension.toLowerCase(), this);
 		fullDescription = null;
@@ -63,7 +63,7 @@ public class ExtensionFileFilter extends FileFilter {
 			if(description == null || isExtensionListInDescription()) {
 				fullDescription = description==null ? "(" : description + " (";
 				// build the description from the extension list
-				Enumeration<String> extensions = filters.keys();
+				Enumeration extensions = filters.keys();
 				if(extensions != null) {
 					fullDescription += "." + (String) extensions.nextElement();
 					while (extensions.hasMoreElements()) {

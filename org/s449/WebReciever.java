@@ -125,7 +125,7 @@ public class WebReciever {
 		} else if (op == RequestObject.ADDMATCH && first.obj != null
 				&& (first.obj instanceof Collection) && u.canScore()) {
 			// add a list of matches
-			Collection<ScheduleItem> ls = (Collection<ScheduleItem>)first.obj;
+			Collection ls = (Collection)first.obj;
 			if (ls.size() > 0) {
 				data.addMatches(ls);
 				changed = true;
@@ -138,7 +138,7 @@ public class WebReciever {
 		} else if (op == RequestObject.DELMATCH && first.obj != null
 				&& (first.obj instanceof Collection) && u.canScore()) {
 			// remove a list of matches
-			Collection<ScheduleItem> ls = (Collection<ScheduleItem>)first.obj;
+			Collection ls = (Collection)first.obj;
 			if (ls.size() > 0) {
 				data.delMatches(ls);
 				changed = true;

@@ -20,7 +20,7 @@ public class AnalysisTicker extends JLabel {
 	/**
 	 * The 5 team analysis list.
 	 */
-	private ArrayList<Team> analysis;
+	private ArrayList analysis;
 	/**
 	 * The index position of the string.
 	 */
@@ -61,7 +61,7 @@ public class AnalysisTicker extends JLabel {
 		placebo = ScheduleItem.blankTeam;
 		// init data
 		watchTeam = null;
-		analysis = new ArrayList<Team>(6);
+		analysis = new ArrayList(6);
 	}
 	/**
 	 * This method should be called to scroll the ticker.
@@ -87,9 +87,9 @@ public class AnalysisTicker extends JLabel {
 	private void loadMoreData() {
 		int i;
 		double crit;
-		Iterator<Team> it;
+		Iterator it;
 		Team team;
-		StringBuilder out = new StringBuilder(1024);
+		StringBuffer out = new StringBuffer(1024);
 		out.append("Scout449 Analysis Ticker");
 		out.append(sep);
 		// points/game
@@ -102,10 +102,10 @@ public class AnalysisTicker extends JLabel {
 			out.append("Top 5 Teams in Points/Game");
 			out.append(sep);
 			while (it.hasNext()) {
-				team = it.next();
+				team = (Team)it.next();
 				crit = team.getPPG();
 				for (i = 0; i < 5; i++)
-					if (crit > analysis.get(i).getPPG() || analysis.get(i).equals(placebo)) {
+					if (crit > ((Team)analysis.get(i)).getPPG() || analysis.get(i).equals(placebo)) {
 						insertAt(team, i);
 						break;
 					}
@@ -120,10 +120,10 @@ public class AnalysisTicker extends JLabel {
 		out.append("Top 5 User Ranked Teams");
 		out.append(sep);
 		while (it.hasNext()) {
-			team = it.next();
+			team = (Team)it.next();
 			crit = team.getRating();
 			for (i = 0; i < 5; i++)
-				if (crit >= analysis.get(i).getRating() || analysis.get(i).equals(placebo)) {
+				if (crit >= ((Team)analysis.get(i)).getRating() || analysis.get(i).equals(placebo)) {
 					insertAt(team, i);
 					break;
 				}
@@ -137,10 +137,10 @@ public class AnalysisTicker extends JLabel {
 		out.append(sep);
 		it = event.getTeams().values().iterator();
 		while (it.hasNext()) {
-			team = it.next();
+			team = (Team)it.next();
 			crit = team.getFIRSTRank();
 			for (i = 0; i < 5; i++)
-				if (crit <= analysis.get(i).getFIRSTRank() || analysis.get(i).equals(placebo)) {
+				if (crit <= ((Team)analysis.get(i)).getFIRSTRank() || analysis.get(i).equals(placebo)) {
 					insertAt(team, i);
 					break;
 				}
@@ -161,19 +161,19 @@ public class AnalysisTicker extends JLabel {
 			out.append(watchTeam.getLosses());
 			out.append(sep);
 		}
-		Map<SecondTime, ScheduleItem> schedule = event.getSchedule();
+		Map schedule = event.getSchedule();
 		// match scores
 		long time = System.currentTimeMillis() / 60000L - Constants.PAST;
-		List<Integer> teams = null;
-		Iterator<Integer> it2 = null;
-		Iterator<Score> sc = null;
+		List teams = null;
+		Iterator it2 = null;
+		Iterator sc = null;
 		String s; ScheduleItem match;
 		boolean first = true;
 		// tick each match
 		synchronized (schedule) {
-			Iterator<ScheduleItem> it3 = schedule.values().iterator();
+			Iterator it3 = schedule.values().iterator();
 			while (it3.hasNext()) {
-				match = it3.next();
+				match = (ScheduleItem)it3.next();
 				if ((match.getTime() + status.getDataStore().minutesLate()) / 60000L > time &&
 						match.getStatus() == ScheduleItem.COMPLETE) {
 					// header
@@ -201,7 +201,7 @@ public class AnalysisTicker extends JLabel {
 						it2 = teams.iterator();
 						// handle both iterators now
 						while (it2.hasNext() && sc.hasNext()) {
-							team = event.get(it2.next());
+							team = event.get((Integer)it2.next());
 							s += "[ " + team.getNumber() + ": " + sc.next() + " ]   ";
 						}
 						out.append("Scores: ");
@@ -218,9 +218,9 @@ public class AnalysisTicker extends JLabel {
 	/**
 	 * Copies the analysis list to the upcoming list.
 	 */
-	private void loadAnalysis(StringBuilder build) {
+	private void loadAnalysis(StringBuffer build) {
 		for (int i = 0; i < analysis.size(); i++) {
-			Team team = analysis.get(i);
+			Team team = (Team)analysis.get(i);
 			build.append(i + 1);
 			build.append(": ");
 			build.append(team.getNumber());

@@ -21,15 +21,14 @@ package org.s449;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
-import javax.imageio.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
-import javax.sound.sampled.*;
 import java.text.*;
 import org.s449.HotkeyList.Hotkey;
 import org.s449.ui.*;
+import org.s449.imageio.ImageIO;
 import java.io.*;
 import java.net.*;
 import java.util.*;
@@ -142,23 +141,23 @@ public class Client extends JPanel implements Runnable {
 	/**
 	 * Sorted array of teams updated by updateTeamList() method.
 	 */
-	private ArrayList<Team> teamsSorted;
+	private ArrayList teamsSorted;
 	/**
 	 * The team list always sorted by team # ascending.
 	 */
-	private ArrayList<Team> sortList;
+	private ArrayList sortList;
 	/**
 	 * A backup array for updateTeamList().
 	 */
-	private ArrayList<Team> teamsSorted0;
+	private ArrayList teamsSorted0;
 	/**
 	 * The visible backing queue of matches to come.
 	 */
-	private ArrayList<ScheduleItem> queue;
+	private ArrayList queue;
 	/**
 	 * The list of matches at the top.
 	 */
-	private ArrayList<ScheduleItem> kQueue;
+	private ArrayList kQueue;
 	/**
 	 * Convenience alias to the hotkey list.
 	 */
@@ -286,7 +285,7 @@ public class Client extends JPanel implements Runnable {
 	/**
 	 * List of teams on alliance #1 (red alliance).
 	 */
-	private ArrayList<AllianceTeam> alliance1;
+	private ArrayList alliance1;
 	/**
 	 * Total team score on the left.
 	 */
@@ -294,7 +293,7 @@ public class Client extends JPanel implements Runnable {
 	/**
 	 * List of teams on alliance #2 (blue alliance).
 	 */
-	private ArrayList<AllianceTeam> alliance2;
+	private ArrayList alliance2;
 	/**
 	 * Total team score on the right.
 	 */
@@ -452,34 +451,6 @@ public class Client extends JPanel implements Runnable {
 	 */
 	private JpegFilter jpegs;
 	/**
-	 * "Until Match" clip for announcements.
-	 */
-	private Clip untilMatch;
-	/**
-	 * "Attention" clip for announcements.
-	 */
-	private Clip attention;
-	/**
-	 * "Red" clip for announcements.
-	 */
-	private Clip allRed;
-	/**
-	 * "Blue" clip for announcements.
-	 */
-	private Clip allBlue;
-	/**
-	 * "Alliance" clip for announcements.
-	 */
-	private Clip alliance;
-	/**
-	 * Sounds for time intervals.
-	 */
-	private Clip[] interval;
-	/**
-	 * Flag to stop multi-sound overlap.
-	 */
-	private volatile boolean soundPlaying;
-	/**
 	 * List of times before which to be warned of an upcoming match.
 	 */
 	private int[] warnBefore;
@@ -543,7 +514,7 @@ public class Client extends JPanel implements Runnable {
 	/**
 	 * The match comment log.
 	 */
-	private LinkedList<TC> vList;
+	private LinkedList vList;
 	/**
 	 * The giant HTML field for the match comment log.
 	 */
@@ -559,7 +530,7 @@ public class Client extends JPanel implements Runnable {
 	/**
 	 * The cached images.
 	 */
-	private HashMap<String, ImageData> cache;
+	private HashMap cache;
 	/**
 	 * The MediaTracker to load images to be uploaded.
 	 */
@@ -655,9 +626,9 @@ public class Client extends JPanel implements Runnable {
 			teamsSorted.addAll(data.getActive().getTeams().values());
 		} else {
 			// in-line update
-			Iterator<Team> it = teamsSorted.iterator();
+			Iterator it = teamsSorted.iterator();
 			while (it.hasNext())
-				teamsSorted0.add(data.get(it.next().getNumber()));
+				teamsSorted0.add(data.get(((Team)it.next()).getNumber()));
 			teamsSorted.clear();
 			teamsSorted.addAll(teamsSorted0);
 			teamsSorted0.clear();
@@ -674,7 +645,7 @@ public class Client extends JPanel implements Runnable {
 	 * 
 	 * @return a team list
 	 */
-	public java.util.List<Team> getTeamList() {
+	public java.util.List getTeamList() {
 		return Collections.unmodifiableList(sortList);
 	}
 	/**
@@ -682,7 +653,7 @@ public class Client extends JPanel implements Runnable {
 	 * 
 	 * @return the team list
 	 */
-	public java.util.List<Team> getVisualTeamList() {
+	public java.util.List getVisualTeamList() {
 		return teamsSorted;
 	}
 	/**
@@ -706,12 +677,12 @@ public class Client extends JPanel implements Runnable {
 	private boolean matchAt(long time) {
 		ScheduleItem match;
 		synchronized (data.getSchedule()) {
-			match = data.getSchedule().get(new SecondTime(time));
+			match = (ScheduleItem)data.getSchedule().get(new SecondTime(time));
 		}
 		if (match != null)
 			return !AppLib.confirm(status.getWindow(), "A match is already scheduled at " +
-				ScheduleItem.timeFormat(time) + " on " + ScheduleItem.dateFormat(time) +
-				".\n\nDo you want to over-write it with this match?");
+					ScheduleItem.timeFormat(time) + " on " + ScheduleItem.dateFormat(time) +
+			".\n\nDo you want to over-write it with this match?");
 		return false;
 	}
 	/**
@@ -763,7 +734,7 @@ public class Client extends JPanel implements Runnable {
 			if (VolumeLister.versionCompare(Constants.VERSION_FULL, wb.getServerVersion()) < 0 &&
 					!status.isServerRunning()
 					&& AppLib.confirm(status.getWindow(), "A new version of Scout449 (" + 
-					wb.getServerVersion() + ") is available.\nUpdate now?")) {
+							wb.getServerVersion() + ") is available.\nUpdate now?")) {
 				// update Scout449!
 				VolumeLister.invokeJVM("-jar updater.jar \"http://" + host + ":" + webPort
 					+ "/scout449.jar\"");
@@ -840,7 +811,7 @@ public class Client extends JPanel implements Runnable {
 			queue.clear();
 			AppLib.printDebug("Loading schedule");
 			synchronized (data.getSchedule()) {
-				Iterator<ScheduleItem> it = data.getSchedule().values().iterator();
+				Iterator it = data.getSchedule().values().iterator();
 				while (it.hasNext())
 					queue.add(it.next());
 			}
@@ -867,15 +838,15 @@ public class Client extends JPanel implements Runnable {
 	 */
 	private void doMatchEntry() {
 		if (!user.canScore()) return;
-		ArrayList<Integer> teams = new ArrayList<Integer>(ScheduleItem.TPA * 2 + 1);
+		ArrayList teams = new ArrayList(ScheduleItem.TPA * 2 + 1);
 		long time = 0;
 		// first take in and validate teams
-		java.util.List<Integer> nums = matchDialog.getTeams();
+		java.util.List nums = matchDialog.getTeams();
 		if (nums == null) return;
-		Iterator<Integer> it = nums.iterator();
-		int num;
+		Iterator it = nums.iterator();
+		Integer num;
 		while (it.hasNext()) {
-			num = it.next();
+			num = (Integer)it.next();
 			if (teams.contains(num)) {
 				AppLib.printWarn(status.getWindow(), num + " is a duplicate.");
 				return;
@@ -886,19 +857,19 @@ public class Client extends JPanel implements Runnable {
 		long newTime = matchDialog.getTime();
 		if (newTime < 0L) return;
 		Calendar local = Calendar.getInstance();
-		local.setTimeInMillis(newTime);
+		local.setTime(new Date(newTime));
 		local.set(Calendar.SECOND, 0);
 		local.set(Calendar.MILLISECOND, 0);
-		time = local.getTimeInMillis();
+		time = local.getTime().getTime();
 		if (time / 1000L < date / 1000L) {
 			if (!AppLib.confirm(status.getWindow(), "The match time that you have entered is " +
-				"in the past.\n\nContinue entering the match anyway?"))
-			return;
+			"in the past.\n\nContinue entering the match anyway?"))
+				return;
 		} else if ((time / 1000L < data.getActive().getStartDate() / 1000L ||
-			time / 1000L > data.getActive().getEndDate() / 1000L)) {
+				time / 1000L > data.getActive().getEndDate() / 1000L)) {
 			if (!AppLib.confirm(status.getWindow(), "The match time that you have entered is " +
-				"not during the current event.\nContinue entering the match anyway?"))
-			return;
+			"not during the current event.\nContinue entering the match anyway?"))
+				return;
 		}
 		// set into seconds array
 		if (matchAt(time)) return;
@@ -908,7 +879,7 @@ public class Client extends JPanel implements Runnable {
 		else try {
 			int match = Integer.parseInt(matchNum);
 			if ((match > 200 || match < 1) && !AppLib.confirm(status.getWindow(),
-				"That match number looks wrong.\nContinue entering the match anyway?"))
+			"That match number looks wrong.\nContinue entering the match anyway?"))
 				return;
 			lastMatchNum = match;
 		} catch (Exception e) {
@@ -934,7 +905,7 @@ public class Client extends JPanel implements Runnable {
 	private boolean late() {
 		if (!user.canScore()) return false;
 		String newTime = JOptionPane.showInputDialog(this, "How many minutes late is FIRST?",
-			"Running Late?", JOptionPane.WARNING_MESSAGE);
+				"Running Late?", JOptionPane.WARNING_MESSAGE);
 		if (newTime == null) return false;
 		requestFocus();
 		try {
@@ -983,8 +954,8 @@ public class Client extends JPanel implements Runnable {
 	 */
 	private boolean shouldShow(ScheduleItem item) {
 		return item.getStatus() != ScheduleItem.COMPLETE &&
-			item.getTime() + (data.getData().minutesLate() - qd) * 60000L > date
-			&& (allMatches.isSelected() || item.getTeams().indexOf(myTeam) >= 0);
+		item.getTime() + (data.getData().minutesLate() - qd) * 60000L > date
+		&& (allMatches.isSelected() || item.getTeams().indexOf(new Integer(myTeam)) >= 0);
 	}
 	/**
 	 * Runs the timer countdown loop of the program.
@@ -994,7 +965,7 @@ public class Client extends JPanel implements Runnable {
 		forceNotify = false;
 		AppLib.printDebug("Starting main loop");
 		String str, title = null, mm = null, str2; Color col, col2;
-		Iterator<ScheduleItem> it; ScheduleItem item, firstItem = null;
+		Iterator it; ScheduleItem item, firstItem = null;
 		int i, index; boolean caps, update;
 		while (running) {
 			newDate = System.currentTimeMillis();
@@ -1014,7 +985,7 @@ public class Client extends JPanel implements Runnable {
 				synchronized (queue) {
 					it = kQueue.iterator();
 					while (it.hasNext()) {
-						item = it.next();
+						item = (ScheduleItem)it.next();
 						if (item != null && !shouldShow(item)) {
 							update = true;
 							break;
@@ -1026,8 +997,8 @@ public class Client extends JPanel implements Runnable {
 					it = queue.iterator();
 					i = 0;
 					while (it.hasNext()) {
-						item = it.next();
-						index = item.getTeams().indexOf(myTeam);
+						item = (ScheduleItem)it.next();
+						index = item.getTeams().indexOf(new Integer(myTeam));
 						if (shouldShow(item)) {
 							if (index >= 0 && firstItem == null) {
 								// set up the coming up title
@@ -1042,13 +1013,13 @@ public class Client extends JPanel implements Runnable {
 									col2 = Constants.LIGHT_BLUE;
 								}
 								title = "Next Match: " + item.getLabel() +
-									" " + item.getNum() + " on " + title;
+								" " + item.getNum() + " on " + title;
 								mm = "until " + item.getLabel() + " " + item.getNum();
 							}
 							// individual clocks
 							if (i < clocks.length) {
 								delta = (item.getTime() - date + (data.getData().minutesLate() -
-									qd) * 60000L) / 1000L;
+										qd) * 60000L) / 1000L;
 								str = Long.toString(delta / 3600L);
 								if (str.length() < 2) str = "0" + str;
 								str2 = Long.toString((delta % 3600L / 60L) % 60L);
@@ -1071,21 +1042,16 @@ public class Client extends JPanel implements Runnable {
 					// update the big display and warning beeps
 					if (firstItem != null) {
 						for (i = 0; i < ScheduleItem.TPA * 2; i++) {
-							str = Integer.toString(firstItem.getTeams().get(i));
+							str = firstItem.getTeams().get(i).toString();
 							firstTeams[i].setText(str);
 							kFirstTeams[i].setText(str);
 						}
 						delta = (firstItem.getTime() - date + (data.getData().minutesLate() -
-							qd) * 60000L) / 1000L;
+								qd) * 60000L) / 1000L;
 						// handle sound
 						for (i = 0; i < warnBefore.length; i++)
 							if (delta == warnBefore[i])
-								if (untilMatch == null || attention == null || alliance == null ||
-										interval[i] == null || allRed == null || allBlue == null)
-									Toolkit.getDefaultToolkit().beep();
-								else
-									new SoundPlayerThread(i, firstItem.getTeams().indexOf(myTeam) >=
-										ScheduleItem.TPA).start();
+								Toolkit.getDefaultToolkit().beep();
 						mainClock.setSeconds((int)(delta % 60L));
 						mainClock.setMinutes((int)(delta / 60L % 60L));
 						mainClock.setHours((int)(delta / 3600L % 100L));
@@ -1212,58 +1178,32 @@ public class Client extends JPanel implements Runnable {
 		// prevent re-init
 		if (queue != null || running) return;
 		AppLib.printDebug("Initializing client");
-		queue = new ArrayList<ScheduleItem>(80);
-		kQueue = new ArrayList<ScheduleItem>(showAlliance + 1);
-		teamsSorted = new ArrayList<Team>(80);
-		teamsSorted0 = new ArrayList<Team>(80);
-		sortList = new ArrayList<Team>(80);
-		cache = new HashMap<String, ImageData>(100);
+		queue = new ArrayList(80);
+		kQueue = new ArrayList(showAlliance + 1);
+		teamsSorted = new ArrayList(80);
+		teamsSorted0 = new ArrayList(80);
+		sortList = new ArrayList(80);
+		cache = new HashMap(100);
 		hotkeys = new HotkeyList();
 		me = this;
 		forceNotify = false;
 		lastHeight = -1;
-		soundPlaying = false;
 		showAlliance = 5;
 		warnBefore = new int[] { 300, 600, 1800 };
 		events = new LocalEventListener();
 		status.addActionListener(events);
-		alliance1 = new ArrayList<AllianceTeam>(6);
-		alliance2 = new ArrayList<AllianceTeam>(6);
+		alliance1 = new ArrayList(6);
+		alliance2 = new ArrayList(6);
 		selectedIndex = sIndex = 0; selectedSide = false;
 		kiosk = new KioskWindow();
 		running = false;
 		index = 0;
 		files = null;
-		vList = new LinkedList<TC>();
+		vList = new LinkedList();
 		refresher = new LoaderThread();
 		refresher.start();
 		setupUI();
 		loader = new MediaTracker(this);
-		AppLib.printDebug("Loading sounds");
-		untilMatch = loadAudioClip("wav/until_match.wav");
-		attention = loadAudioClip("wav/attention.wav");
-		alliance = loadAudioClip("wav/alliance.wav");
-		allRed = loadAudioClip("wav/red.wav");
-		allBlue = loadAudioClip("wav/blue.wav");
-		interval = new Clip[] {
-			loadAudioClip("wav/minute5.wav"),
-			loadAudioClip("wav/minute10.wav"),
-			loadAudioClip("wav/minute30.wav")
-		};
-	}
-	/**
-	 * Loads an audio clip.
-	 */
-	private Clip loadAudioClip(String fileName) {
-		try {
-			// go
-			Clip output = AudioSystem.getClip();
-			output.open(AudioSystem.getAudioInputStream(new File(fileName)));
-			return output;
-		} catch (Exception e) {
-			// no go
-			return null;
-		}
 	}
 	/**
 	 * Sets up the user interface (tabs).
@@ -1297,7 +1237,8 @@ public class Client extends JPanel implements Runnable {
 		pnl.add(load);
 		vert.add(pnl);
 		// logo
-		pnl = new Box(BoxLayout.X_AXIS);
+		pnl = new JPanel();
+		pnl.setLayout(new BoxLayout(pnl, BoxLayout.X_AXIS));
 		pnl.setOpaque(false);
 		JLabel logo = new JLabel(status.getIcon("scout449"));
 		pnl.add(logo);
@@ -1319,8 +1260,8 @@ public class Client extends JPanel implements Runnable {
 		JPanel v2 = new JPanel(new GridLayout(2, 0, 3, 2));
 		v2.setOpaque(false);
 		v2.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createLineBorder(Constants.WHITE),
-			BorderFactory.createEmptyBorder(5, 10, 5, 0)));
+				BorderFactory.createLineBorder(Constants.WHITE),
+				BorderFactory.createEmptyBorder(5, 10, 5, 0)));
 		lbl = new AntialiasedJLabel("red   ");
 		lbl.setForeground(Constants.RED);
 		v2.add(lbl);
@@ -1356,7 +1297,8 @@ public class Client extends JPanel implements Runnable {
 		vert.add(pnl);
 		add(vert, BorderLayout.NORTH);
 		// complete tab list
-		pnl = new Box(BoxLayout.X_AXIS);
+		pnl = new JPanel();
+		pnl.setLayout(new BoxLayout(pnl, BoxLayout.X_AXIS));
 		pnl.setOpaque(false);
 		iTabs = new JTabbedPane();
 		iTabs.setUI(new STabbedPaneUI());
@@ -1387,7 +1329,6 @@ public class Client extends JPanel implements Runnable {
 		c.add(lbl);
 		c.add(Box.createVerticalStrut(10));
 		JButton btn = new JButton("Stop Waiting and Disconnect");
-		btn.setFocusable(false);
 		btn.setActionCommand("disconn");
 		btn.addActionListener(events);
 		btn.setAlignmentX(JComponent.CENTER_ALIGNMENT);
@@ -1406,20 +1347,15 @@ public class Client extends JPanel implements Runnable {
 		tabs = 1;
 		iTabs.removeAll();
 		iTabs.addTab("kiosk", null, pencl, "Upcoming Match List");
-		iTabs.setMnemonicAt(0, KeyEvent.VK_K);
 		if (user.canRead()) {
 			tabs = 3;
 			// matches and teams
 			iTabs.addTab("matches", null, matchPanel, "List of Matches");
-			iTabs.setMnemonicAt(1, KeyEvent.VK_M);
 			iTabs.addTab("teams", null, teamLister, "List of Teams");
-			iTabs.setMnemonicAt(2, KeyEvent.VK_T);
 			if (user.canScore()) {
 				tabs = 5;
 				iTabs.addTab("scoring", null, sencl, "Score a Match");
-				iTabs.setMnemonicAt(3, KeyEvent.VK_S);
 				iTabs.addTab("images", null, iencl, "Upload Team Images");
-				iTabs.setMnemonicAt(4, KeyEvent.VK_I);
 			}
 		}
 		validate();
@@ -1433,7 +1369,8 @@ public class Client extends JPanel implements Runnable {
 	 */
 	private JComponent module(JComponent top, JComponent bot) {
 		// vertical panel
-		JComponent panel = new Box(BoxLayout.Y_AXIS);
+		JComponent panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		panel.setOpaque(false);
 		// add all
 		top.setAlignmentX(JComponent.CENTER_ALIGNMENT);
@@ -1510,7 +1447,7 @@ public class Client extends JPanel implements Runnable {
 	 */
 	private void qualEntry() {
 		if (!qual.isSelected() || iTabs.getSelectedIndex() != 3 || toScore == null ||
-			!user.canScore()) return;
+				!user.canScore()) return;
 		qualEntry.setBackground(Constants.WHITE);
 		String text = Server.htmlspecial(qualEntry.getText());
 		if (text == null || (text = text.trim()).length() < 1) return;
@@ -1532,7 +1469,7 @@ public class Client extends JPanel implements Runnable {
 		if (text.length() < 1) return;
 		try {
 			teamNum = Integer.parseInt(num);
-			if (toScore.getTeams().indexOf(teamNum) < 0) {
+			if (toScore.getTeams().indexOf(new Integer(teamNum)) < 0) {
 				qualEntry.setBackground(Constants.LIGHT_RED);
 				return;
 			}
@@ -1558,7 +1495,7 @@ public class Client extends JPanel implements Runnable {
 		Document doc = vLog.getDocument();
 		try {
 			vLog.getEditorKit().read(new StringReader("<b>" + teamNum + "</b>: " + text),
-				doc, doc.getLength());
+					doc, doc.getLength());
 			vLog.repaint();
 			vLog.setCaretPosition(doc.getLength());
 			cDirty = true;
@@ -1591,18 +1528,18 @@ public class Client extends JPanel implements Runnable {
 		// actual boxes
 		int i; AllianceTeam tm; JComponent scp; JTextField score;
 		JTextField[] scoreList = null; Hotkey item;
-		Iterator<Hotkey> it = null;
+		Iterator it = null;
 		for (i = 0; i < ScheduleItem.TPA; i++) {
 			nl = new NumericOnlyListener(false, i);
 			// scoring panel
-			tm = alliance1.get(i);
+			tm = (AllianceTeam)alliance1.get(i);
 			scp = tm.panel;
 			scp.removeAll();
 			if (data.getData().isAdvScore()) {
 				it = hotkeys.getList().iterator();
 				scoreList = new JTextField[hotkeys.size()];
 				for (int j = 0; j < hotkeys.size() && it.hasNext(); j++) {
-					item = it.next();
+					item = (Hotkey)it.next();
 					score = new JTextField(2);
 					score.setText("0");
 					score.addKeyListener(nl);
@@ -1629,13 +1566,13 @@ public class Client extends JPanel implements Runnable {
 			nl = new NumericOnlyListener(false, i + ScheduleItem.TPA);
 			scoreList = new JTextField[hotkeys.size()];
 			// scoring panel
-			tm = alliance2.get(i);
+			tm = (AllianceTeam)alliance2.get(i);
 			scp = tm.panel;
 			scp.removeAll();
 			if (data.getData().isAdvScore()) {
 				it = hotkeys.getList().iterator();
 				for (int j = 0; j < hotkeys.size(); j++) {
-					item = it.next();
+					item = (Hotkey)it.next();
 					score = new JTextField(2);
 					score.setText("0");
 					score.addKeyListener(nl);
@@ -1676,7 +1613,8 @@ public class Client extends JPanel implements Runnable {
 	 */
 	private JComponent getScoringBox(JTextField score, String label) {
 		// set up horizontal for penalties
-		JComponent horiz = new Box(BoxLayout.X_AXIS);
+		JComponent horiz = new JPanel();
+		horiz.setLayout(new BoxLayout(horiz, BoxLayout.X_AXIS));
 		horiz.setOpaque(false);
 		horiz.add(Box.createHorizontalStrut(15));
 		JLabel jl = new AntialiasedJLabel(label);
@@ -1700,13 +1638,11 @@ public class Client extends JPanel implements Runnable {
 		quan.setActionCommand("qq");
 		quan.setSelected(false);
 		quan.setOpaque(false);
-		quan.setFocusable(false);
 		quan.addActionListener(events);
 		qual = new JRadioButton("Comments");
 		qual.setOpaque(false);
 		qual.setActionCommand("qq");
 		qual.setSelected(true);
-		qual.setFocusable(false);
 		qual.addActionListener(events);
 		NumericOnlyListener nl = new NumericOnlyListener(false, -1);
 		NumericOnlyListener nlt = new NumericOnlyListener(true, -1);
@@ -1719,7 +1655,7 @@ public class Client extends JPanel implements Runnable {
 		JComponent leftPanel = new JPanel(new VerticalFlow(true));
 		leftPanel.setOpaque(false);
 		leftPanel.setBorder(BorderFactory.createTitledBorder(ButtonFactory.getThinBorder(),
-			"Red Alliance", TitledBorder.LEFT, TitledBorder.TOP, null, Constants.RED));
+				"Red Alliance", TitledBorder.LEFT, TitledBorder.TOP, null, Constants.RED));
 		leftTotal = new JTextField(2);
 		leftTotal.setMaximumSize(leftTotal.getPreferredSize());
 		leftTotal.setText("0");
@@ -1729,7 +1665,7 @@ public class Client extends JPanel implements Runnable {
 		JComponent rightPanel = new JPanel(new VerticalFlow(true));
 		rightPanel.setOpaque(false);
 		rightPanel.setBorder(BorderFactory.createTitledBorder(ButtonFactory.getThinBorder(),
-			"Blue Alliance", TitledBorder.LEFT, TitledBorder.TOP, null, Constants.BLUE));
+				"Blue Alliance", TitledBorder.LEFT, TitledBorder.TOP, null, Constants.BLUE));
 		rightTotal = new JTextField(2);
 		rightTotal.setMaximumSize(rightTotal.getPreferredSize());
 		rightTotal.setText("0");
@@ -1755,7 +1691,8 @@ public class Client extends JPanel implements Runnable {
 			nl = new NumericOnlyListener(false, i);
 			rl = new ReplaceListener(i, false);
 			// left side
-			row = new Box(BoxLayout.X_AXIS);
+			row = new JPanel();
+			row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
 			row.setOpaque(false);
 			// team name
 			but = ButtonFactory.getButton("No Entrant", "red", rl, -1);
@@ -1776,11 +1713,11 @@ public class Client extends JPanel implements Runnable {
 			score.setMaximumSize(score.getPreferredSize());
 			// replace button
 			row.add(ButtonFactory.getButton(status.getIcon("edit"),
-				"edit", rl, buttonSize));
+					"edit", rl, buttonSize));
 			row.add(Box.createHorizontalStrut(1));
 			// delete button
 			row.add(ButtonFactory.getButton(status.getIcon("delete"),
-				"del", rl, buttonSize));
+					"del", rl, buttonSize));
 			row.add(Box.createHorizontalStrut(5));
 			// the rest
 			row.add(but);
@@ -1794,7 +1731,8 @@ public class Client extends JPanel implements Runnable {
 			nl = new NumericOnlyListener(false, i + ScheduleItem.TPA);
 			rl = new ReplaceListener(i, true);
 			// right side
-			row = new Box(BoxLayout.X_AXIS);
+			row = new JPanel();
+			row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
 			row.setOpaque(false);
 			// team name
 			but = ButtonFactory.getButton("No Entrant", "blue", rl, -1);
@@ -1815,11 +1753,11 @@ public class Client extends JPanel implements Runnable {
 			score.setMaximumSize(score.getPreferredSize());
 			// replace button
 			row.add(ButtonFactory.getButton(status.getIcon("edit"),
-				"edit", rl, buttonSize));
+					"edit", rl, buttonSize));
 			row.add(Box.createHorizontalStrut(1));
 			// delete button
 			row.add(ButtonFactory.getButton(status.getIcon("delete"),
-				"del", rl, buttonSize));
+					"del", rl, buttonSize));
 			row.add(Box.createHorizontalStrut(5));
 			// the rest
 			row.add(but);
@@ -1852,7 +1790,8 @@ public class Client extends JPanel implements Runnable {
 		// finish off this step
 		leftPanel.add(Box.createVerticalStrut(10));
 		leftPanel.add(Box.createHorizontalStrut(460));
-		row = new Box(BoxLayout.X_AXIS);
+		row = new JPanel();
+		row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
 		row.setOpaque(false);
 		// total red
 		title = new AntialiasedJLabel("Total Red");
@@ -1865,7 +1804,8 @@ public class Client extends JPanel implements Runnable {
 		// right side
 		rightPanel.add(Box.createVerticalStrut(10));
 		rightPanel.add(Box.createHorizontalStrut(460));
-		row = new Box(BoxLayout.X_AXIS);
+		row = new JPanel();
+		row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
 		row.setOpaque(false);
 		// total blue
 		title = new AntialiasedJLabel("Total Blue");
@@ -1889,7 +1829,7 @@ public class Client extends JPanel implements Runnable {
 		row.setOpaque(false);
 		// skip back
 		sBack = ButtonFactory.getButton(status.getIcon("back"),
-			"prev", events, null);
+				"prev", events, null);
 		sBack.setMnemonic(KeyEvent.VK_Z);
 		row.add(sBack);
 		// load from schedule
@@ -1902,7 +1842,7 @@ public class Client extends JPanel implements Runnable {
 		row.add(closest);
 		// skip ahead
 		sAhead = ButtonFactory.getButton(status.getIcon("forward"),
-			"next", events, null);
+				"next", events, null);
 		sBack.setMnemonic(KeyEvent.VK_X);
 		row.add(sAhead);
 		row.setAlignmentX(JComponent.CENTER_ALIGNMENT);
@@ -1926,7 +1866,8 @@ public class Client extends JPanel implements Runnable {
 		qualEntry.addFocusListener(TextSelector.INSTANCE);
 		qualEntry.setActionCommand("qe");
 		qualEntry.addActionListener(events);
-		row = new Box(BoxLayout.X_AXIS);
+		row = new JPanel();
+		row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
 		row.add(Box.createHorizontalStrut(50));
 		row.add(qualEntry);
 		row.add(Box.createHorizontalStrut(10));
@@ -1964,7 +1905,7 @@ public class Client extends JPanel implements Runnable {
 		row.add(result);
 		// commit score button
 		row.add(ButtonFactory.getButton("Log Scores", "commit", events,
-			KeyEvent.VK_C));
+				KeyEvent.VK_C));
 		south.add(row);
 		// hotkey help!
 		hkhelp = new AntialiasedJLabel(" ");
@@ -1990,7 +1931,7 @@ public class Client extends JPanel implements Runnable {
 		jpegs = new JpegFilter();
 		// The image goes in the middle.
 		img = new JLabel();
-		img.setBackground(Color.WHITE);
+		img.setBackground(Constants.WHITE);
 		img.setOpaque(true);
 		img.setHorizontalAlignment(SwingConstants.CENTER);
 		img.setVerticalAlignment(SwingConstants.CENTER);
@@ -2094,7 +2035,6 @@ public class Client extends JPanel implements Runnable {
 				btn.setForeground(Constants.RED);
 			else
 				btn.setForeground(Constants.BLUE);
-			btn.setFocusable(false);
 			btn.addActionListener(new CommentButtonListener(all, ind));
 			btn.setFont(textFont);
 			teamList[i] = btn;
@@ -2111,12 +2051,12 @@ public class Client extends JPanel implements Runnable {
 			RowListener rl = new RowListener(i);
 			// delete button
 			btn = ButtonFactory.getButton(status.getIcon("delete"),
-				"del", rl, buttonSize);
+					"del", rl, buttonSize);
 			btn.setVisible(false);
 			delButton[i] = btn;
 			// edit button
 			btn = ButtonFactory.getButton(status.getIcon("edit"),
-				"edit", rl, buttonSize);
+					"edit", rl, buttonSize);
 			btn.setVisible(false);
 			editButton[i] = btn;
 			// clocks last
@@ -2146,7 +2086,8 @@ public class Client extends JPanel implements Runnable {
 			all = i / (ScheduleItem.TPA * 2);
 			ind = i - (ScheduleItem.TPA * 2 * all);
 			// add team to box
-			pnl = new Box(BoxLayout.X_AXIS);
+			pnl = new JPanel();
+			pnl.setLayout(new BoxLayout(pnl, BoxLayout.X_AXIS));
 			pnl.setOpaque(false);
 			// on first display clock and delete/edit.
 			if (ind == 0) {
@@ -2180,8 +2121,8 @@ public class Client extends JPanel implements Runnable {
 		JComponent center = new JScrollPane(queueList);
 		center.setOpaque(false);
 		center.setBorder(BorderFactory.createTitledBorder(BorderFactory.
-			createLineBorder(Constants.BLACK), "In Queue", TitledBorder.LEFT,
-			TitledBorder.DEFAULT_POSITION, null, Constants.BLACK));
+				createLineBorder(Constants.BLACK), "In Queue", TitledBorder.LEFT,
+				TitledBorder.DEFAULT_POSITION, null, Constants.BLACK));
 		pencl.add(center, BorderLayout.CENTER);
 	}
 	/**
@@ -2192,10 +2133,10 @@ public class Client extends JPanel implements Runnable {
 		int i = 0; sIndex = i;
 		ScheduleItem match;
 		synchronized (queue) {
-			Iterator<ScheduleItem> it = queue.iterator();
+			Iterator it = queue.iterator();
 			while (it.hasNext()) {
 				// find the difference between date and time
-				match = it.next();
+				match = (ScheduleItem)it.next();
 				error = Math.abs(match.getTime() / 1000L - tt);
 				if (error < bestError) {
 					bestError = error;
@@ -2231,29 +2172,29 @@ public class Client extends JPanel implements Runnable {
 			// total from the text boxes
 			if (num >= 0 && num < ScheduleItem.TPA) {
 				AppLib.printDebug("Totalling team@" + num + " on left");
-				item = alliance1.get(num);
+				item = (AllianceTeam)alliance1.get(num);
 				try {
 					item.score.setTotalScore(Integer.parseInt(item.total.getText()));
 				} catch (Exception e) { }
 			} else if (num >= ScheduleItem.TPA && num < ScheduleItem.TPA * 2) {
 				num -= ScheduleItem.TPA;
 				AppLib.printDebug("Totalling team@" + num + " on right");
-				item = alliance2.get(num);
+				item = (AllianceTeam)alliance2.get(num);
 				try {
 					item.score.setTotalScore(Integer.parseInt(item.total.getText()));
 				} catch (Exception e) { }
 			}
 		}
 		// tally the valid left scores
-		Iterator<AllianceTeam> it = alliance1.iterator();
+		Iterator it = alliance1.iterator();
 		while (it.hasNext()) {
-			item = it.next();
+			item = (AllianceTeam)it.next();
 			leftScore += item.score.totalScore();
 		}
 		// tally the valid right scores
 		it = alliance2.iterator();
 		while (it.hasNext()) {
-			item = it.next();
+			item = (AllianceTeam)it.next();
 			rightScore += item.score.totalScore();
 		}
 		// set totals
@@ -2288,15 +2229,15 @@ public class Client extends JPanel implements Runnable {
 			AppLib.printDebug("Selecting team@" + num + " on left");
 			// clear existing rectangle
 			if (!selectedSide && selectedIndex < alliance1.size()) {
-				item = alliance1.get(selectedIndex);
+				item = (AllianceTeam)alliance1.get(selectedIndex);
 				item.label.setBorder(BorderFactory.createEmptyBorder());
 				item.panel.setVisible(false);
 			} else if (selectedIndex < alliance2.size()) {
-				item = alliance2.get(selectedIndex);
+				item = (AllianceTeam)alliance2.get(selectedIndex);
 				item.label.setBorder(BorderFactory.createEmptyBorder());
 				item.panel.setVisible(false);
 			}
-			item = alliance1.get(num);
+			item = (AllianceTeam)alliance1.get(num);
 			// select new one
 			item.label.setBorder(ButtonFactory.getThinBorder());
 			// show the panel
@@ -2308,15 +2249,15 @@ public class Client extends JPanel implements Runnable {
 			AppLib.printDebug("Selecting team@" + num + " on right");
 			// clear existing rectangle
 			if (!selectedSide && selectedIndex < alliance1.size()) {
-				item = alliance1.get(selectedIndex);
+				item = (AllianceTeam)alliance1.get(selectedIndex);
 				item.label.setBorder(BorderFactory.createEmptyBorder());
 				item.panel.setVisible(false);
 			} else if (selectedIndex < alliance2.size()) {
-				item = alliance2.get(selectedIndex);
+				item = (AllianceTeam)alliance2.get(selectedIndex);
 				item.label.setBorder(BorderFactory.createEmptyBorder());
 				item.panel.setVisible(false);
 			}
-			item = alliance2.get(num);
+			item = (AllianceTeam)alliance2.get(num);
 			// select new one
 			item.label.setBorder(ButtonFactory.getThinBorder());
 			// show the panel
@@ -2382,14 +2323,14 @@ public class Client extends JPanel implements Runnable {
 		}
 		synchronized (queue) {
 			AppLib.printDebug("Updating list queue");
-			Iterator<ScheduleItem> it = queue.iterator();
-			java.util.List<Integer> teams; Team team;
+			Iterator it = queue.iterator();
+			java.util.List teams; Team team;
 			String str; ScheduleItem match;
 			int i, j = 0, k;
 			kQueue.clear();
 			for (i = 0; i < showAlliance && it.hasNext();) {
 				// show the wanteds
-				match = it.next();
+				match = (ScheduleItem)it.next();
 				teams = match.getTeams();
 				if (!shouldShow(match)) continue;
 				editButton[i].setVisible(true);
@@ -2400,7 +2341,7 @@ public class Client extends JPanel implements Runnable {
 				kQueue.add(match);
 				// drop in team names
 				for (k = 0; k < teams.size() && j < teamList.length; k++) {
-					team = data.get(teams.get(k));
+					team = data.get((Integer)teams.get(k));
 					if (k == 0) {
 						teamList[j].setForeground(Constants.RED);
 						kTeamList[j].setForeground(Constants.RED);
@@ -2449,7 +2390,7 @@ public class Client extends JPanel implements Runnable {
 			int num; String title;
 			// update left
 			for (i = 0; i < ScheduleItem.TPA; i++) {
-				num = alliance1.get(i).teamNum;
+				num = ((AllianceTeam)alliance1.get(i)).teamNum;
 				if (num == 0)
 					title = "No Entrant";
 				else {
@@ -2461,13 +2402,13 @@ public class Client extends JPanel implements Runnable {
 					title = (i + 1) + ": " + num + " " + title;
 				else
 					title = (i + 1) + ": " + num + " " +
-						title.substring(0, 16) + "...";
-				alliance1.get(i).label.setText(title);
+					title.substring(0, 16) + "...";
+				((AllianceTeam)alliance1.get(i)).label.setText(title);
 				qualTeams[i].setText(title);
 			}
 			// update right
 			for (i = 0; i < ScheduleItem.TPA; i++) {
-				num = alliance2.get(i).teamNum;
+				num = ((AllianceTeam)alliance2.get(i)).teamNum;
 				if (num == 0)
 					title = "No Entrant";
 				else {
@@ -2479,8 +2420,8 @@ public class Client extends JPanel implements Runnable {
 					title = (i + 1 + ScheduleItem.TPA) + ": " + num + " " + title;
 				else
 					title = (i + 1 + ScheduleItem.TPA) + ": " + num + " " +
-						title.substring(0, 16) + "...";
-				alliance2.get(i).label.setText(title);
+					title.substring(0, 16) + "...";
+				((AllianceTeam)alliance2.get(i)).label.setText(title);
 				qualTeams[i + ScheduleItem.TPA].setText(title);
 			}
 		}
@@ -2501,7 +2442,7 @@ public class Client extends JPanel implements Runnable {
 	 */
 	private boolean confirmChange() {
 		return (sDirty || cDirty) && !AppLib.confirm(status.getWindow(), "The current match has " +
-			"been edited.\nReloading the match will erase these edits.\nContinue anyway?");
+		"been edited.\nReloading the match will erase these edits.\nContinue anyway?");
 	}
 	/**
 	 * Loads teams from the schedule. Queues up next match.
@@ -2517,26 +2458,26 @@ public class Client extends JPanel implements Runnable {
 		}
 		synchronized (queue) {
 			AppLib.printDebug("Loading next match");
-			toScore = queue.get(sIndex);
-			java.util.List<Score> scores = toScore.getScores();
-			java.util.List<Integer> teams = toScore.getTeams();
+			toScore = (ScheduleItem)queue.get(sIndex);
+			java.util.List scores = toScore.getScores();
+			java.util.List teams = toScore.getTeams();
 			AllianceTeam item, item2; int p;
 			for (int i = 0; i < ScheduleItem.TPA; i++) {
-				item = alliance1.get(i);
+				item = (AllianceTeam)alliance1.get(i);
 				// always set team #s and penalty counts
-				item.teamNum = teams.get(i);
+				item.teamNum = ((Integer)teams.get(i)).intValue();
 				if (scores != null && i < scores.size()) {
-					p = scores.get(i).getPenaltyCount();
+					p = ((Score)scores.get(i)).getPenaltyCount();
 					item.pen.setText(Integer.toString(p));
 					item.score.setPenaltyCount(p);
 				} else {
 					item.pen.setText("0");
 					item.score.setPenaltyCount(0);
 				}
-				item2 = alliance2.get(i);
-				item2.teamNum = teams.get(i + ScheduleItem.TPA);
+				item2 = (AllianceTeam)alliance2.get(i);
+				item2.teamNum = ((Integer)teams.get(i + ScheduleItem.TPA)).intValue();
 				if (scores != null && i + ScheduleItem.TPA < scores.size()) {
-					p = scores.get(i + ScheduleItem.TPA).getPenaltyCount();
+					p = ((Score)scores.get(i + ScheduleItem.TPA)).getPenaltyCount();
 					item2.pen.setText(Integer.toString(p));
 					item2.score.setPenaltyCount(p);
 				} else {
@@ -2547,7 +2488,7 @@ public class Client extends JPanel implements Runnable {
 					// individuals if advanced
 					for (int j = 0; j < hotkeys.size(); j++) {
 						if (scores != null && i < scores.size()) {
-							p = scores.get(i).getScoreAt(j);
+							p = ((Score)scores.get(i)).getScoreAt(j);
 							item.scores[j].setText(Integer.toString(p));
 							item.score.setScoreAt(j, p);
 						} else {
@@ -2555,7 +2496,7 @@ public class Client extends JPanel implements Runnable {
 							item.score.setScoreAt(j, 0);
 						}
 						if (scores != null && i + ScheduleItem.TPA < scores.size()) {
-							p = scores.get(i + ScheduleItem.TPA).getScoreAt(j);
+							p = ((Score)scores.get(i + ScheduleItem.TPA)).getScoreAt(j);
 							item2.scores[j].setText(Integer.toString(p));
 							item2.score.setScoreAt(j, p);
 						} else {
@@ -2565,7 +2506,7 @@ public class Client extends JPanel implements Runnable {
 					}
 					// set totals
 					if (scores != null && i < scores.size()) {
-						p = scores.get(i).totalScore();
+						p = ((Score)scores.get(i)).totalScore();
 						item.total.setText(Integer.toString(p));
 						item.score.setTotalScore(p);
 					} else {
@@ -2573,7 +2514,7 @@ public class Client extends JPanel implements Runnable {
 						item.score.setTotalScore(0);
 					}
 					if (scores != null && i + ScheduleItem.TPA < scores.size()) {
-						p = scores.get(i + ScheduleItem.TPA).totalScore();
+						p = ((Score)scores.get(i + ScheduleItem.TPA)).totalScore();
 						item2.total.setText(Integer.toString(p));
 						item2.score.setTotalScore(p);
 					} else {
@@ -2586,7 +2527,7 @@ public class Client extends JPanel implements Runnable {
 			leftTotal.setText(Integer.toString(toScore.getRedScore()));
 			rightTotal.setText(Integer.toString(toScore.getBlueScore()));
 			scoreTop.setText(toScore.getLabel() + " " + toScore.getNum() +
-				(toScore.getStatus() == ScheduleItem.COMPLETE ? "   (Scored)" : ""));
+					(toScore.getStatus() == ScheduleItem.COMPLETE ? "   (Scored)" : ""));
 			updateListQueue();
 			sDirty = false;
 			sBack.setEnabled(sIndex > 0);
@@ -2605,7 +2546,7 @@ public class Client extends JPanel implements Runnable {
 		// update scores with text fields
 		if (num >= 0 && num < ScheduleItem.TPA) {
 			AppLib.printDebug("Scoring team@" + num + " on left");
-			item = alliance1.get(num);
+			item = (AllianceTeam)alliance1.get(num);
 			if (data.getData().isAdvScore())
 				for (int i = 0; i < item.scores.length; i++)
 					try {
@@ -2615,18 +2556,18 @@ public class Client extends JPanel implements Runnable {
 					} catch (Exception e) {
 						item.score.setScoreAt(i, 0);
 					}
-			try {
-				pen = Integer.parseInt(item.pen.getText());
-				item.score.setPenaltyCount(pen);
-				total -= 10 * pen;
-			} catch (Exception e) {
-				item.score.setPenaltyCount(0);
-			}
-			item.score.setTotalScore(total);
+					try {
+						pen = Integer.parseInt(item.pen.getText());
+						item.score.setPenaltyCount(pen);
+						total -= 10 * pen;
+					} catch (Exception e) {
+						item.score.setPenaltyCount(0);
+					}
+					item.score.setTotalScore(total);
 		} else if (num >= ScheduleItem.TPA && num < ScheduleItem.TPA * 2) {
 			num -= ScheduleItem.TPA;
 			AppLib.printDebug("Scoring team@" + num + " on right");
-			item = alliance2.get(num);
+			item = (AllianceTeam)alliance2.get(num);
 			if (data.getData().isAdvScore())
 				for (int i = 0; i < item.scores.length; i++)
 					try {
@@ -2636,15 +2577,15 @@ public class Client extends JPanel implements Runnable {
 					} catch (Exception e) {
 						item.score.setScoreAt(i, 0);
 					}
-			try {
-				pen = Integer.parseInt(item.pen.getText());
-				item.score.setPenaltyCount(pen);
-				total -= 10 * pen;
-			} catch (Exception e) {
-				item.score.setPenaltyCount(0);
-			}
-			item.score.setTotalScore(total);
-			num += ScheduleItem.TPA;
+					try {
+						pen = Integer.parseInt(item.pen.getText());
+						item.score.setPenaltyCount(pen);
+						total -= 10 * pen;
+					} catch (Exception e) {
+						item.score.setPenaltyCount(0);
+					}
+					item.score.setTotalScore(total);
+					num += ScheduleItem.TPA;
 		}
 		total(num);
 		rally();
@@ -2658,12 +2599,12 @@ public class Client extends JPanel implements Runnable {
 		AllianceTeam item;
 		if (num >= 0 && num < ScheduleItem.TPA) {
 			AppLib.printDebug("Adding team@" + num + " on left");
-			item = alliance1.get(num);
+			item = (AllianceTeam)alliance1.get(num);
 			item.total.setText(Integer.toString(item.score.totalScore()));
 		} else if (num >= ScheduleItem.TPA && num < ScheduleItem.TPA * 2) {
 			num -= ScheduleItem.TPA;
 			AppLib.printDebug("Adding team@" + num + " on right");
-			item = alliance2.get(num);
+			item = (AllianceTeam)alliance2.get(num);
 			item.total.setText(Integer.toString(item.score.totalScore()));
 		}
 		tally(num);
@@ -2681,13 +2622,13 @@ public class Client extends JPanel implements Runnable {
 		if (field == -1) {
 			if (num >= 0 && num < ScheduleItem.TPA) {
 				AppLib.printDebug("Scoring team@" + num + " on left");
-				item = alliance1.get(num);
+				item = (AllianceTeam)alliance1.get(num);
 				e = item.score.getPenaltyCount() + dir;
 				if (e >= 0) item.score.setPenaltyCount(e);
 			} else if (num >= ScheduleItem.TPA && num < ScheduleItem.TPA * 2) {
 				num -= ScheduleItem.TPA;
 				AppLib.printDebug("Scoring team@" + num + " on right");
-				item = alliance2.get(num);
+				item = (AllianceTeam)alliance2.get(num);
 				e = item.score.getPenaltyCount() + dir;
 				if (e >= 0) item.score.setPenaltyCount(e);
 				num += ScheduleItem.TPA;
@@ -2696,13 +2637,13 @@ public class Client extends JPanel implements Runnable {
 			if (!data.getData().isAdvScore()) return;
 			if (num >= 0 && num < ScheduleItem.TPA) {
 				AppLib.printDebug("Scoring team@" + num + " on left");
-				item = alliance1.get(num);
+				item = (AllianceTeam)alliance1.get(num);
 				e = item.score.getScoreAt(field) + dir;
 				if (e >= 0) item.score.setScoreAt(field, e);
 			} else if (num >= ScheduleItem.TPA && num < ScheduleItem.TPA * 2) {
 				num -= ScheduleItem.TPA;
 				AppLib.printDebug("Scoring team@" + num + " on right");
-				item = alliance2.get(num);
+				item = (AllianceTeam)alliance2.get(num);
 				e = item.score.getScoreAt(field) + dir;
 				if (e >= 0) item.score.setScoreAt(field, e);
 				num += ScheduleItem.TPA;
@@ -2720,30 +2661,30 @@ public class Client extends JPanel implements Runnable {
 		// penalties only
 		if (num >= 0 && num < ScheduleItem.TPA) {
 			AppLib.printDebug("Updating team@" + num + " on left");
-			item = alliance1.get(num);
+			item = (AllianceTeam)alliance1.get(num);
 			item.pen.setText(Integer.toString(item.score.getPenaltyCount()));
 		} else if (num >= ScheduleItem.TPA && num < ScheduleItem.TPA * 2) {
 			num -= ScheduleItem.TPA;
 			AppLib.printDebug("Updating team@" + num + " on right");
-			item = alliance2.get(num);
+			item = (AllianceTeam)alliance2.get(num);
 			item.pen.setText(Integer.toString(item.score.getPenaltyCount()));
 			num += ScheduleItem.TPA;
 		}
 		if (data.getData().isAdvScore()) {
 			// all hot keys
-			Iterator<Integer> it;
+			Iterator it;
 			int i = 0;
 			if (num >= 0 && num < ScheduleItem.TPA) {
-				item = alliance1.get(num);
+				item = (AllianceTeam)alliance1.get(num);
 				it = item.score.iterator();
 				while (it.hasNext() && i < item.scores.length)
-					item.scores[i++].setText(Integer.toString(it.next()));
+					item.scores[i++].setText(it.next().toString());
 			} else if (num >= ScheduleItem.TPA && num < ScheduleItem.TPA * 2) {
 				num -= ScheduleItem.TPA;
-				item = alliance2.get(num);
+				item = (AllianceTeam)alliance2.get(num);
 				it = item.score.iterator();
 				while (it.hasNext() && i < item.scores.length)
-					item.scores[i++].setText(Integer.toString(it.next()));
+					item.scores[i++].setText(it.next().toString());
 				num += ScheduleItem.TPA;
 			}
 		}
@@ -2756,18 +2697,18 @@ public class Client extends JPanel implements Runnable {
 		if (vList.size() < 1 || toScore == null || !user.canScore() ||
 				!AppLib.confirm(status.getWindow(), "Do you really want to commit comments?"))
 			return;
-		Iterator<TC> it = vList.iterator();
-		java.util.List<Integer> tms = toScore.getTeams();
+		Iterator it = vList.iterator();
+		java.util.List tms = toScore.getTeams();
 		Comment[] comments = new Comment[tms.size()]; TC tc; int index = 0; Team team;
-		Comment comment; Iterator<Comment> it2;
-		Iterator<Integer> it3 = tms.iterator();
+		Comment comment; Iterator it2;
+		Iterator it3 = tms.iterator();
 		while (it3.hasNext()) {
-			team = data.get(it3.next());
+			team = data.get((Integer)it3.next());
 			if (team != null && team.getComments() != null) {
 				// load existing
 				it2 = team.getComments().iterator();
 				while (it2.hasNext()) {
-					comment = it2.next();
+					comment = (Comment)it2.next();
 					if (comment.getMatch() != null && comment.getMatch().equals(toScore)) {
 						comments[index] = comment;
 						break;
@@ -2776,18 +2717,18 @@ public class Client extends JPanel implements Runnable {
 			}
 			index++;
 		}
-		java.util.List<Integer> list;
+		java.util.List list;
 		it = vList.iterator(); int rate = 0;
 		while (it.hasNext()) {
-			tc = it.next();
-			index = tms.indexOf(tc.teamNum);
+			tc = (TC)it.next();
+			index = tms.indexOf(new Integer(tc.teamNum));
 			if (index < 0) continue;
 			if (comments[index] == null) {
 				// create new
 				int sz = data.getData().getUDFs().size();
-				list = new ArrayList<Integer>(sz);
+				list = new ArrayList(sz);
 				for (int i = 0; i < sz; i++)
-					list.add(0);
+					list.add(new Integer(0));
 				comments[index] = new Comment(user, toScore, "", 0, list, date);
 			}
 			// auto rating
@@ -2798,21 +2739,21 @@ public class Client extends JPanel implements Runnable {
 					rate = Integer.parseInt(tc.text.substring(4).trim());
 					if (rate < 0 || rate > 5) rate = 0;
 				} catch (Exception e) { }
-			if (rate != 0)
-				comment.setRating(rate);
-			// append
-			else if (comment.getText().length() < 1)
-				comment.setText(tc.text);
-			else
-				comment.setText(comment.getText() + "\n" + tc.text);
-			comment.setWhen(date);
+				if (rate != 0)
+					comment.setRating(rate);
+				// append
+				else if (comment.getText().length() < 1)
+					comment.setText(tc.text);
+				else
+					comment.setText(comment.getText() + "\n" + tc.text);
+				comment.setWhen(date);
 		}
 		// update all non-null teams with comment
 		it3 = tms.iterator();
 		index = 0;
 		load();
 		while (it3.hasNext()) {
-			team = data.get(it3.next());
+			team = data.get((Integer)it3.next());
 			if (team != null && team.getComments() != null && comments[index] != null)
 				data.updateComment(team.getNumber(), comments[index]);
 			index++;
@@ -2825,7 +2766,7 @@ public class Client extends JPanel implements Runnable {
 	private void commitScore() {
 		if (!user.canScore() || toScore == null) return;
 		if (!AppLib.confirm(status.getWindow(), "Please verify that the scores on the screen " +
-				"are correct.\nDo not commit without checking this data!\n\nCommit?"))
+		"are correct.\nDo not commit without checking this data!\n\nCommit?"))
 			return;
 		// decided to commit
 		AppLib.printDebug("Committing scores to backend");
@@ -2838,31 +2779,31 @@ public class Client extends JPanel implements Runnable {
 			return;
 		}
 		// set up totals
-		ArrayList<Score> scores = new ArrayList<Score>(ScheduleItem.TPA * 2);
-		ArrayList<Integer> teams = new ArrayList<Integer>(ScheduleItem.TPA * 2);
+		ArrayList scores = new ArrayList(ScheduleItem.TPA * 2);
+		ArrayList teams = new ArrayList(ScheduleItem.TPA * 2);
 		int num;
 		// load valid left scores and teams
-		Iterator<AllianceTeam> ait = alliance1.iterator();
+		Iterator ait = alliance1.iterator();
 		AllianceTeam tm;
 		while (ait.hasNext()) {
-			tm = ait.next();
+			tm = (AllianceTeam)ait.next();
 			num = tm.teamNum;
 			scores.add(tm.score);
 			if (num <= 0)
-				teams.add(0);
+				teams.add(new Integer(0));
 			else
-				teams.add(num);
+				teams.add(new Integer(num));
 		}
 		// load valid right scores and teams
 		ait = alliance2.iterator();
 		while (ait.hasNext()) {
-			tm = ait.next();
+			tm = (AllianceTeam)ait.next();
 			num = tm.teamNum;
 			scores.add(tm.score);
 			if (num <= 0)
-				teams.add(0);
+				teams.add(new Integer(0));
 			else
-				teams.add(num);
+				teams.add(new Integer(num));
 		}
 		// read existing match
 		try {
@@ -2871,15 +2812,16 @@ public class Client extends JPanel implements Runnable {
 				String dat = "Warning: This match has already been scored.\n\n";
 				dat += "If you continue, the new scores will be:\n";
 				if (data.getData().isAdvScore()) {
-					Iterator<Integer> it = teams.iterator();
-					Iterator<Score> it2 = toScore.getScores().iterator();
+					Iterator it = teams.iterator();
+					Iterator it2 = toScore.getScores().iterator();
 					// copy new scores list
-					ArrayList<Score> nl = new ArrayList<Score>(ScheduleItem.TPA * 2);
+					ArrayList nl = new ArrayList(ScheduleItem.TPA * 2);
 					Score sc;
 					int i = 0;
 					while (it.hasNext() && it2.hasNext()) {
-						sc = it2.next();
-						if (scores.get(i).totalScore() != 0) sc = scores.get(i);
+						sc = (Score)it2.next();
+						if (((Score)scores.get(i)).totalScore() != 0)
+							sc = (Score)scores.get(i);
 						dat += it.next() + ": " + sc + "\n";
 						nl.add(sc);
 						if (i == ScheduleItem.TPA - 1)
@@ -2946,14 +2888,14 @@ public class Client extends JPanel implements Runnable {
 			synchronized (cache) {
 				if (cache.size() > 3) {
 					// delete oldest images
-					Iterator<String> it = cache.keySet().iterator();
+					Iterator it = cache.keySet().iterator();
 					while (it.hasNext()) {
-						io = cache.get(it.next());
+						io = (ImageData)cache.get(it.next());
 						if (io.timeAdded + 1000 * Constants.TTL_SECONDS < date)
 							it.remove();
 					}
 				}
-				io = cache.get(name);
+				io = (ImageData)cache.get(name);
 				if (io == null) {
 					// not cached
 					toSend = loadImageWait(uploading, 0);
@@ -2971,7 +2913,7 @@ public class Client extends JPanel implements Runnable {
 			// Skip the file.
 			img.setIcon(null);
 			AppLib.printWarn(status.getWindow(), "Could not read the file \"" +
-				uploading.getName() + "\".");
+					uploading.getName() + "\".");
 		}
 	}
 	/**
@@ -3081,7 +3023,7 @@ public class Client extends JPanel implements Runnable {
 		if (!AppLib.positiveInteger(txt) ||
 				data.get(Integer.parseInt(txt)) == null) {
 			AppLib.printWarn(status.getWindow(), "Please enter a valid team number to " +
-				"tag the photo.");
+			"tag the photo.");
 			return;
 		}
 		upName = txt + ".jpg";
@@ -3104,14 +3046,14 @@ public class Client extends JPanel implements Runnable {
 	 * @return a list of JPEG files
 	 */
 	private File[] listAll(File base) {
-		LinkedList<File> files = new LinkedList<File>();
+		LinkedList files = new LinkedList();
 		listAll0(base, files);
 		File[] ret = new File[files.size()];
 		// copy to array
-		Iterator<File> it = files.iterator();
+		Iterator it = files.iterator();
 		int i = 0;
 		while (it.hasNext())
-			ret[i++] = it.next();
+			ret[i++] = (File)it.next();
 		return ret;
 	}
 	/**
@@ -3120,7 +3062,7 @@ public class Client extends JPanel implements Runnable {
 	 * @param base the directory to search
 	 * @param files the list to append
 	 */
-	private void listAll0(File base, java.util.List<File> files) {
+	private void listAll0(File base, java.util.List files) {
 		File[] list = base.listFiles();
 		if (list == null) return;
 		File file;
@@ -3169,7 +3111,6 @@ public class Client extends JPanel implements Runnable {
 			but.setHorizontalTextPosition(SwingConstants.RIGHT);
 			but.setActionCommand("drive");
 			but.addActionListener(new DriveListener(i));
-			but.setFocusable(false);
 			but.setSelected(false);
 			driveButtons[i] = but;
 			drives.add(but);
@@ -3178,7 +3119,6 @@ public class Client extends JPanel implements Runnable {
 		but.setHorizontalTextPosition(SwingConstants.RIGHT);
 		but.setActionCommand("custom");
 		but.addActionListener(events);
-		but.setFocusable(false);
 		but.setSelected(false);
 		driveButtons[driveButtons.length - 1] = but;
 		drives.add(but);
@@ -3206,7 +3146,7 @@ public class Client extends JPanel implements Runnable {
 				files = listAll(roots[index]);
 				current = roots[index];
 			} else if (customImage.showDialog(status.getWindow(), "Select") ==
-					JFileChooser.APPROVE_OPTION) {
+				JFileChooser.APPROVE_OPTION) {
 				// custom images
 				File file = customImage.getSelectedFile();
 				if (file.canRead() && file.isDirectory()) {
@@ -3245,16 +3185,16 @@ public class Client extends JPanel implements Runnable {
 		File file = AppLib.openFile(this, "csv");
 		if (file == null) return;
 		// date formats
-		java.util.List<MatchLabel> labels = data.getData().getLabels();
+		java.util.List labels = data.getData().getLabels();
 		try {
 			// variable initialization
 			BufferedReader br = new BufferedReader(new FileReader(file));
 			String line, token, matchLabel; StringTokenizer str;
 			Date in = null; long realTime; ScheduleItem match; int matchNum, i, j;
 			Calendar local = Calendar.getInstance(), forYear = Calendar.getInstance();
-			local.setTimeInMillis(date);
-			LinkedList<ScheduleItem> list = new LinkedList<ScheduleItem>();
-			LinkedList<Integer> teams; char ch;
+			local.setTime(new Date(date));
+			LinkedList list = new LinkedList();
+			LinkedList teams; char ch;
 			String sur, tm; BitSet counts = new BitSet(2 * ScheduleItem.TPA);
 			for (i = 0; i < formats.length; i++)
 				formats[i].setCalendar(local);
@@ -3286,7 +3226,7 @@ public class Client extends JPanel implements Runnable {
 				try {
 					matchNum = Integer.parseInt(str.nextToken().trim());
 					if ((matchNum < 1 || matchNum > 300) && !AppLib.confirm(status.getWindow(),
-						"Match number " + matchNum + " looks invalid.\nContinue anyway?"))
+							"Match number " + matchNum + " looks invalid.\nContinue anyway?"))
 						continue;
 					matchLabel = str.nextToken().trim().toLowerCase();
 				} catch (Exception e) {
@@ -3294,11 +3234,11 @@ public class Client extends JPanel implements Runnable {
 					matchNum = Integer.parseInt(str.nextToken().trim());
 				}
 				// look in the table
-				Iterator<MatchLabel> it = labels.iterator();
+				Iterator it = labels.iterator();
 				MatchLabel item;
 				MatchLabel newLabel = null;
 				while (it.hasNext()) {
-					item = it.next();
+					item = (MatchLabel)it.next();
 					if (item.getLabel().equalsIgnoreCase(matchLabel)) {
 						newLabel = item;
 						break;
@@ -3307,13 +3247,14 @@ public class Client extends JPanel implements Runnable {
 				if (newLabel == null) {
 					// take the default
 					if (labels.size() > 0)
-						newLabel = labels.get(0);
+						newLabel = (MatchLabel)labels.get(0);
 					else
 						newLabel = MatchLabel.blank;
 					AppLib.printDebug("setting default match label " + matchLabel);
 				}
-				teams = new LinkedList<Integer>();
-				counts.clear();
+				teams = new LinkedList();
+				for (i = 0; i < ScheduleItem.TPA * 2; i++)
+					counts.clear(i);
 				// read some teams!
 				for (i = 0; i < ScheduleItem.TPA * 2; i++) {
 					tm = str.nextToken().trim();
@@ -3327,9 +3268,10 @@ public class Client extends JPanel implements Runnable {
 							j = 0;
 						}
 						// oops
-						if (j < 1) tm = JOptionPane.showInputDialog(status.getWindow(),
+						if (j < 1) tm = (String)JOptionPane.showInputDialog(status.getWindow(),
 							"Team number \"" + (-j) + "\" is not valid.\n\nPress OK to enter a " +
-							"replacement, or Cancel to skip this match.", Integer.toString(j));
+							"replacement, or Cancel to skip this match.", "Team",
+							JOptionPane.QUESTION_MESSAGE, null, null, Integer.toString(j));
 						if (tm == null) break;
 					}
 					// can I use goto here? PLEASE?
@@ -3341,12 +3283,12 @@ public class Client extends JPanel implements Runnable {
 						if (ch == 'y' || ch == 't') counts.set(i);
 						else counts.clear(i);
 					}
-					teams.add(j);
+					teams.add(new Integer(j));
 				}
 				if (i < ScheduleItem.TPA * 2) continue;
 				// set info and add
 				AppLib.printDebug("ScheduleItem[time=" + realTime + ",label=" + matchLabel +
-					",num=" + matchNum + ",status=scheduled,teams=" + teams + "]");
+						",num=" + matchNum + ",status=scheduled,teams=" + teams + "]");
 				match = new ScheduleItem(teams, realTime, true);
 				match.getSurrogate().or(counts);
 				match.setLabel(newLabel);
@@ -3357,22 +3299,22 @@ public class Client extends JPanel implements Runnable {
 			// really?
 			if (list.size() > 0) {
 				if (!AppLib.confirm(status.getWindow(), list.size() + " matches were read from " +
-					"the file.\nEverything looks OK.\n\nContinue with the import?"))
+				"the file.\nEverything looks OK.\n\nContinue with the import?"))
 					return;
 				load();
 				data.addMatches(list);
 			} else {
 				AppLib.printWarn(status.getWindow(), "No matches were read from the file." +
-					"Suggestions:\n\n1. Check the file contents. Follow the format as in " +
-					"example.csv.\n2. Make sure that the file was saved as Comma Separated " +
-					"Values or Comma Delimited Values.\n3. Check the date format.");
+						"Suggestions:\n\n1. Check the file contents. Follow the format as in " +
+						"example.csv.\n2. Make sure that the file was saved as Comma Separated " +
+				"Values or Comma Delimited Values.\n3. Check the date format.");
 			}
 		} catch (Exception e) {
 			AppLib.debugException(e);
 			AppLib.printWarn(status.getWindow(), "Could not import the file. Suggestions:\n\n" +
-				"1. Check the file contents. Follow the format as in example.csv.\n" +
-				"2. Make sure that the file was saved as Comma Separated Values or Comma " +
-				"Delimited Values.\n3. Make sure that the file is readable.");
+					"1. Check the file contents. Follow the format as in example.csv.\n" +
+					"2. Make sure that the file was saved as Comma Separated Values or Comma " +
+			"Delimited Values.\n3. Make sure that the file is readable.");
 		}
 	}
 
@@ -3398,77 +3340,9 @@ public class Client extends JPanel implements Runnable {
 			String cmd = e.getActionCommand();
 			if (cmd == null || !user.canScore()) return;
 			else if (cmd.equals("del") && entry >= 0 && entry < queue.size())
-				removeQueue(queue.get(entry));
+				removeQueue((ScheduleItem)queue.get(entry));
 			else if (cmd.equals("edit") && entry >= 0 && entry < queue.size())
-				editQueue(queue.get(entry));
-		}
-	}
-
-	/**
-	 * Thread class to play sounds in background.
-	 */
-	private class SoundPlayerThread extends Thread {
-		/**
-		 * The index of the clip to be playing.
-		 */
-		private int clipIndex;
-		/**
-		 * The side to play: true=blue, false=red
-		 */
-		private boolean side;
-
-		/**
-		 * Creates a new sound playing thread on the given clip index.
-		 * 
-		 * @param index the index of the clip to play
-		 * @param side the side to play
-		 */
-		public SoundPlayerThread(int index, boolean side) {
-			clipIndex = index;
-			this.side = side;
-			setName("Sound Thread");
-			setPriority(Thread.MIN_PRIORITY + 1);
-			setDaemon(true);
-		}
-		public void run() {
-			if (untilMatch != null && attention != null && !soundPlaying) {
-				// start sound playing, rewind
-				soundPlaying = true;
-				untilMatch.setFramePosition(0);
-				attention.setFramePosition(0);
-				allRed.setFramePosition(0);
-				allBlue.setFramePosition(0);
-				alliance.setFramePosition(0);
-				interval[clipIndex].setFramePosition(0);
-				// attention!
-				attention.start();
-				AppLib.sleep(1000L);
-				attention.stop();
-				// n minutes
-				interval[clipIndex].start();
-				AppLib.sleep(1100L);
-				interval[clipIndex].stop();
-				// until match
-				untilMatch.start();
-				AppLib.sleep(1300L);
-				untilMatch.stop();
-				AppLib.sleep(700L);
-				// red/blue
-				if (!side) {
-					allRed.start();
-					AppLib.sleep(800L);
-					allRed.stop();
-				} else {
-					allBlue.start();
-					AppLib.sleep(800L);
-					allBlue.stop();
-				}
-				// alliance
-				alliance.start();
-				AppLib.sleep(1000L);
-				alliance.stop();
-				soundPlaying = false;
-			}
+				editQueue((ScheduleItem)queue.get(entry));
 		}
 	}
 
@@ -3499,7 +3373,8 @@ public class Client extends JPanel implements Runnable {
 			if (entry >= queue.size() || index >= ScheduleItem.TPA * 2)
 				matchEntry();
 			else if (user.canRead() && kQueue.get(entry) != null) {
-				Team team = data.get(kQueue.get(entry).getTeams().get(index));
+				Team team = data.get((Integer)((ScheduleItem)kQueue.get(entry)).getTeams()
+					.get(index));
 				AppLib.printDebug("Showing comments for " + team);
 				showComments(team);
 			}
@@ -3560,7 +3435,7 @@ public class Client extends JPanel implements Runnable {
 			setName("Waiting for Connection");
 			setPriority(Thread.MIN_PRIORITY);
 			setDaemon(true);
-			start();
+			this.start();
 		}
 		public void run() {
 			rcDialog.setVisible(true);
@@ -3637,58 +3512,58 @@ public class Client extends JPanel implements Runnable {
 					select = true;
 					updateListQueue();
 				} catch (Exception ex) { }
-			else if (cmd.equals("sts"))
-				commitComments();
-			else if (cmd.equals("load")) {
-				if (confirmChange()) return;
-				emptyLog();
-				loadItem();
-				sFocus();
-			} else if (cmd.equals("commit") && quan.isSelected()) {
-				commitScore();
-				sFocus();
-			} else if (cmd.equals("closest")) {
-				if (confirmChange()) return;
-				emptyLog();
-				gotoClosest();
-				loadItem();
-				sFocus();
-			} else if (cmd.equals("next")) {
-				if (confirmChange()) return;
-				emptyLog();
-				scoreGo(1);
-				sFocus();
-			} else if (cmd.equals("prev")) {
-				if (confirmChange()) return;
-				emptyLog();
-				scoreGo(-1);
-				sFocus();
-			} else if (cmd.equals("imp"))
-				importLots();
-			else if (cmd.equals("qq"))
-				qq(quan.isSelected());
-			else if (cmd.equals("custom"))
-				setDrive(roots.length);
-			else if (cmd.equals("s_conndrop") && running)
-				connStat.setStatus(StatusBox.STATUS_SOSO);
-			else if (cmd.equals("disconn") && running)
-				status.showClient(false);
-			else if (cmd.equals("s_connect") && running) {
-				if (status.isConnected())
-					connStat.setStatus(StatusBox.STATUS_GOOD);
-				else {
-					connStat.setStatus(StatusBox.STATUS_BAD);
-					if (!rcDialog.isVisible()) new CWThread();
-				}
-			} else if (cmd.equals("s_client")) {
-				boolean toShow = status.isClientShowing();
-				if (toShow && !running) start();
-				else if (!toShow && running) {
-					shutdown();
-					status.setConnectionStatus(false);
-				}
-			} else if (cmd.equals("fs"))
-				kiosk.show(!kiosk.isShowing());
+				else if (cmd.equals("sts"))
+					commitComments();
+				else if (cmd.equals("load")) {
+					if (confirmChange()) return;
+					emptyLog();
+					loadItem();
+					sFocus();
+				} else if (cmd.equals("commit") && quan.isSelected()) {
+					commitScore();
+					sFocus();
+				} else if (cmd.equals("closest")) {
+					if (confirmChange()) return;
+					emptyLog();
+					gotoClosest();
+					loadItem();
+					sFocus();
+				} else if (cmd.equals("next")) {
+					if (confirmChange()) return;
+					emptyLog();
+					scoreGo(1);
+					sFocus();
+				} else if (cmd.equals("prev")) {
+					if (confirmChange()) return;
+					emptyLog();
+					scoreGo(-1);
+					sFocus();
+				} else if (cmd.equals("imp"))
+					importLots();
+				else if (cmd.equals("qq"))
+					qq(quan.isSelected());
+				else if (cmd.equals("custom"))
+					setDrive(roots.length);
+				else if (cmd.equals("s_conndrop") && running)
+					connStat.setStatus(StatusBox.STATUS_SOSO);
+				else if (cmd.equals("disconn") && running)
+					status.showClient(false);
+				else if (cmd.equals("s_connect") && running) {
+					if (status.isConnected())
+						connStat.setStatus(StatusBox.STATUS_GOOD);
+					else {
+						connStat.setStatus(StatusBox.STATUS_BAD);
+						if (!rcDialog.isVisible()) new CWThread();
+					}
+				} else if (cmd.equals("s_client")) {
+					boolean toShow = status.isClientShowing();
+					if (toShow && !running) start();
+					else if (!toShow && running) {
+						shutdown();
+						status.setConnectionStatus(false);
+					}
+				} else if (cmd.equals("fs"))
+					kiosk.show(!kiosk.isShowing());
 		}
 	}
 
@@ -3718,60 +3593,79 @@ public class Client extends JPanel implements Runnable {
 			if (!user.canScore() || toScore == null) return;
 			int replacement = 0;
 			String cmd = e.getActionCommand();
+			Iterator it;
 			if (cmd == null) return;
 			if (cmd.equals("red"))
-				showComments(data.get(alliance1.get(index).teamNum));
+				showComments(data.get(((AllianceTeam)alliance1.get(index)).teamNum));
 			else if (cmd.equals("blue"))
-				showComments(data.get(alliance2.get(index).teamNum));
+				showComments(data.get(((AllianceTeam)alliance2.get(index)).teamNum));
 			else if (side && index < alliance2.size()) {
 				if (cmd.equals("edit")) {
 					try {
-						replacement = Integer.parseInt(JOptionPane.showInputDialog(me,
-							"Enter the replacement team number:",
-							Integer.toString(alliance2.get(index).teamNum)));
+						replacement = Integer.parseInt((String)JOptionPane.showInputDialog(me,
+							"Enter the replacement team number:", "Team",
+							JOptionPane.QUESTION_MESSAGE, null, null,
+							Integer.toString(((AllianceTeam)alliance2.get(index)).teamNum)));
 					} catch (Exception ex) {
 						return;
 					}
-					if ((alliance1.indexOf(replacement) >= 0 ||
-							alliance2.indexOf(replacement) >= 0) && replacement != 0) {
-						AppLib.printWarn(status.getWindow(), "This team is already a member " +
-							"of this match.");
-						return;
-					}
+					it = alliance1.iterator();
+					while (it.hasNext())
+						if (((AllianceTeam)it.next()).teamNum == replacement && replacement != 0) {
+							AppLib.printWarn(status.getWindow(), "This team is already a member " +
+								"of this match.");
+							return;
+						}
+					it = alliance2.iterator();
+					while (it.hasNext())
+						if (((AllianceTeam)it.next()).teamNum == replacement && replacement != 0) {
+							AppLib.printWarn(status.getWindow(), "This team is already a member " +
+								"of this match.");
+							return;
+						}
 					if (data.get(replacement) != null || replacement == 0) {
-						alliance2.get(index).teamNum = replacement;
+						((AllianceTeam)alliance2.get(index)).teamNum = replacement;
 						sDirty = true;
 						updateListQueue();
 					} else
 						AppLib.printWarn(status.getWindow(), replacement + " is not a valid team.");
 				} else if (cmd.equals("del")) {
-					alliance2.get(index).teamNum = 0;
+					((AllianceTeam)alliance2.get(index)).teamNum = 0;
 					sDirty = true;
 					updateListQueue();
 				}
 			} else if (index < alliance1.size()) {
 				if (cmd.equals("edit")) {
 					try {
-						replacement = Integer.parseInt(JOptionPane.showInputDialog(me,
-							"Enter the replacement team number:",
-							Integer.toString(alliance1.get(index).teamNum)));
+						replacement = Integer.parseInt((String)JOptionPane.showInputDialog(me,
+							"Enter the replacement team number:", "Team",
+							JOptionPane.QUESTION_MESSAGE, null, null,
+							Integer.toString(((AllianceTeam)alliance1.get(index)).teamNum)));
 					} catch (Exception ex) {
 						return;
 					}
-					if ((alliance1.indexOf(replacement) >= 0 ||
-							alliance2.indexOf(replacement) >= 0) && replacement != 0) {
-						AppLib.printWarn(status.getWindow(), "This team is already a member " +
-							"of this match.");
-						return;
-					}
+					it = alliance1.iterator();
+					while (it.hasNext())
+						if (((AllianceTeam)it.next()).teamNum == replacement && replacement != 0) {
+							AppLib.printWarn(status.getWindow(), "This team is already a member " +
+								"of this match.");
+							return;
+						}
+					it = alliance2.iterator();
+					while (it.hasNext())
+						if (((AllianceTeam)it.next()).teamNum == replacement && replacement != 0) {
+							AppLib.printWarn(status.getWindow(), "This team is already a member " +
+								"of this match.");
+							return;
+						}
 					if (data.get(replacement) != null || replacement == 0) {
-						alliance1.get(index).teamNum = replacement;
+						((AllianceTeam)alliance1.get(index)).teamNum = replacement;
 						sDirty = true;
 						updateListQueue();
 					} else
 						AppLib.printWarn(status.getWindow(), replacement + " is not a valid team.");
 				} else if (cmd.equals("del")) {
-					alliance1.get(index).teamNum = 0;
+					((AllianceTeam)alliance1.get(index)).teamNum = 0;
 					sDirty = true;
 					updateListQueue();
 				}
@@ -3833,8 +3727,8 @@ public class Client extends JPanel implements Runnable {
 		public boolean accept(File f) {
 			String s = f.getName().toLowerCase();
 			return f.canRead() && (s.endsWith(".jpg") || s.endsWith(".jpe") || s.endsWith(".jpeg")
-				|| s.endsWith(".jfif")) && !s.startsWith(".") && !s.startsWith("_") &&
-				!f.isHidden() && !f.isDirectory() && f.length() > 0;
+					|| s.endsWith(".jfif")) && !s.startsWith(".") && !s.startsWith("_") &&
+					!f.isHidden() && !f.isDirectory() && f.length() > 0;
 		}
 	}
 
@@ -3844,7 +3738,7 @@ public class Client extends JPanel implements Runnable {
 	 *  when enter is pressed.
 	 */
 	private class EventListener extends MouseAdapter implements ActionListener,
-			ChangeListener, Runnable, KeyListener {
+	ChangeListener, Runnable, KeyListener {
 		/**
 		 * Uploads a given file. This is only called when sending.
 		 */
@@ -3889,9 +3783,9 @@ public class Client extends JPanel implements Runnable {
 			} catch (Exception e) {
 				// send error!
 				AppLib.printWarn(status.getWindow(), "Cannot connect to server. Suggestions:" +
-					"\n1. Check for firewalls blocking port " + Constants.BULK_PORT +
-					".\n2. Check the network connection.\n3. Ensure that the server is running" +
-					" and supports image upload mode.\n4. Contact server administrator.");
+						"\n1. Check for firewalls blocking port " + Constants.BULK_PORT +
+						".\n2. Check the network connection.\n3. Ensure that the server is running" +
+				" and supports image upload mode.\n4. Contact server administrator.");
 				AppLib.debugException(e);
 			}
 		}
@@ -4142,7 +4036,8 @@ public class Client extends JPanel implements Runnable {
 				all = i / (ScheduleItem.TPA * 2);
 				ind = i - (ScheduleItem.TPA * 2 * all);
 				// add team to box
-				pnl = new Box(BoxLayout.X_AXIS);
+				pnl = new JPanel();
+				pnl.setLayout(new BoxLayout(pnl, BoxLayout.X_AXIS));
 				pnl.setOpaque(false);
 				pnl.add(Box.createHorizontalStrut(50));
 				pnl.add(kTeamList[i]);
@@ -4158,8 +4053,8 @@ public class Client extends JPanel implements Runnable {
 			JComponent center = new JScrollPane(kQueueList);
 			center.setOpaque(false);
 			center.setBorder(BorderFactory.createTitledBorder(BorderFactory.
-				createLineBorder(Constants.BLACK), "In Queue", TitledBorder.LEFT,
-				TitledBorder.DEFAULT_POSITION, null, Constants.BLACK));
+					createLineBorder(Constants.BLACK), "In Queue", TitledBorder.LEFT,
+					TitledBorder.DEFAULT_POSITION, null, Constants.BLACK));
 			kencl.add(center, BorderLayout.CENTER);
 			JButton fs = ButtonFactory.getButton("Close Kiosk", "fs", events, KeyEvent.VK_F);
 			fs.setHorizontalAlignment(SwingConstants.CENTER);
@@ -4195,7 +4090,8 @@ public class Client extends JPanel implements Runnable {
 			setOpaque(false);
 			setupKioskUI();
 			// logo
-			JComponent pnl = new Box(BoxLayout.X_AXIS);
+			JComponent pnl = new JPanel();
+			pnl.setLayout(new BoxLayout(pnl, BoxLayout.X_AXIS));
 			pnl.setOpaque(false);
 			JLabel logo = new JLabel(status.getIcon("scout449"));
 			pnl.add(logo);
@@ -4212,8 +4108,8 @@ public class Client extends JPanel implements Runnable {
 			JPanel v2 = new JPanel(new GridLayout(2, 0, 3, 2));
 			v2.setOpaque(false);
 			v2.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(Constants.WHITE),
-				BorderFactory.createEmptyBorder(5, 10, 5, 0)));
+					BorderFactory.createLineBorder(Constants.WHITE),
+					BorderFactory.createEmptyBorder(5, 10, 5, 0)));
 			lbl = new AntialiasedJLabel("red   ");
 			lbl.setForeground(Constants.RED);
 			lbl.setFont(lbl.getFont().deriveFont(Font.BOLD));
@@ -4268,7 +4164,7 @@ public class Client extends JPanel implements Runnable {
 		 * 
 		 * @return a Window with the kiosk contents
 		 */
-		public Window getWindow() {
+		public Window getMyWindow() {
 			return kiosk;
 		}
 		/**
@@ -4297,12 +4193,7 @@ public class Client extends JPanel implements Runnable {
 		 */
 		public void show(boolean showing) {
 			parent.setVisible(showing);
-			if (!this.showing && showing)
-				GraphicsEnvironment.getLocalGraphicsEnvironment().
-				getDefaultScreenDevice().setFullScreenWindow(getWindow());
-			else if (this.showing && !showing)
-				GraphicsEnvironment.getLocalGraphicsEnvironment().
-				getDefaultScreenDevice().setFullScreenWindow(null);
+			kiosk.setVisible(showing);
 			this.showing = showing;
 			status.getWindow().setVisible(!showing);
 			if (showing) kiosk.repaint();

@@ -14,7 +14,7 @@ public class UserStore implements java.io.Serializable {
 	/**
 	 * The user data store.
 	 */
-	private HashMap<String, UserData> user;
+	private HashMap user;
 	/**
 	 * The name of the computer/server.
 	 */
@@ -30,7 +30,7 @@ public class UserStore implements java.io.Serializable {
 	public UserStore() {
 		// default configuration
 		UserData def = new UserData();
-		user = new HashMap<String, UserData>(16);
+		user = new HashMap(16);
 		user.put(def.getName(), def);
 		extraData = null;
 		myName = "default";
@@ -42,7 +42,7 @@ public class UserStore implements java.io.Serializable {
 	 * @return access allowed? nil if false or user if true
 	 */
 	public UserData authUser(UserData what) {
-		UserData u = user.get(what.getName());
+		UserData u = (UserData)user.get(what.getName());
 		if (u != null && u.getName().equals(what.getName()) &&
 				u.getPass().equals(what.getPass()))
 			return u;
@@ -55,7 +55,7 @@ public class UserStore implements java.io.Serializable {
 	 * @return the user's info, or null if no such user
 	 */
 	public UserData getUser(String name) {
-		return user.get(name);
+		return (UserData)user.get(name);
 	}
 	/**
 	 * Changes the user with the specified name.
@@ -73,7 +73,7 @@ public class UserStore implements java.io.Serializable {
 	 * 
 	 * @return the user array
 	 */
-	protected Map<String, UserData> getUsers() {
+	protected Map getUsers() {
 		return user;
 	}
 	/**

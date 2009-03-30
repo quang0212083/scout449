@@ -30,7 +30,7 @@ public class MatchList extends JTable {
 	/**
 	 * The match list.
 	 */
-	private ArrayList<ScheduleItem> matches;
+	private ArrayList matches;
 	/**
 	 * The match table model.
 	 */
@@ -47,7 +47,7 @@ public class MatchList extends JTable {
 	 */
 	public MatchList(ScoutStatus stat) {
 		status = stat;
-		matches = new ArrayList<ScheduleItem>(10);
+		matches = new ArrayList(10);
 		model = new MatchTableModel();
 		init();
 		setModel(model);
@@ -177,7 +177,7 @@ public class MatchList extends JTable {
 	 * 
 	 * @param collection the new match list
 	 */
-	public void setList(Collection<ScheduleItem> collection) {
+	public void setList(Collection collection) {
 		int osize = matches.size();
 		matches.clear();
 		matches.addAll(collection);
@@ -200,9 +200,9 @@ public class MatchList extends JTable {
 		if (rows.length == 1) {
 			// more efficient
 			status.getClient().load();
-			status.getBackend().delMatch(matches.get(rows[0]));
+			status.getBackend().delMatch((ScheduleItem)matches.get(rows[0]));
 		} else {
-			ArrayList<ScheduleItem> c = new ArrayList<ScheduleItem>(rows.length);
+			ArrayList c = new ArrayList(rows.length);
 			for (int i = 0; i < rows.length; i++)
 				c.add(matches.get(rows[i]));
 			status.getClient().load();
@@ -232,7 +232,7 @@ public class MatchList extends JTable {
 				bold(lbl);
 			else if (cid >= 0 && cid < 2 * ScheduleItem.TPA || cid == 103 || cid == 104) {
 				// team - bold if win
-				ScheduleItem match = matches.get(row);
+				ScheduleItem match = (ScheduleItem)matches.get(row);
 				if (match.getStatus() == ScheduleItem.COMPLETE) {
 					if (match.getRedScore() > match.getBlueScore() && (cid == 103 ||
 							(cid < ScheduleItem.TPA && cid < 2 * ScheduleItem.TPA))) {
@@ -276,9 +276,9 @@ public class MatchList extends JTable {
 		public Object getValueAt(int rowIndex, int columnIndex) {
 			if (columnIndex < 0 || columnIndex >= titles.length ||
 				rowIndex < 0 || rowIndex >= matches.size()) return null;
-			ScheduleItem match = matches.get(rowIndex);
-			java.util.List<Integer> teams = match.getTeams();
-			java.util.List<Score> scores = match.getScores();
+			ScheduleItem match = (ScheduleItem)matches.get(rowIndex);
+			java.util.List teams = match.getTeams();
+			java.util.List scores = match.getScores();
 			int cid = cids[columnIndex];
 			switch (cid) {
 			case 100:
@@ -295,12 +295,12 @@ public class MatchList extends JTable {
 				return match.getLabel() + " " + match.getNum();
 			case 103:
 				if (match.getStatus() == ScheduleItem.COMPLETE)
-					return match.getRedScore();
+					return new Integer(match.getRedScore());
 				else
 					return "";
 			case 104:
 				if (match.getStatus() == ScheduleItem.COMPLETE)
-					return match.getBlueScore();
+					return new Integer(match.getBlueScore());
 				else
 					return "";
 			default:
@@ -310,7 +310,7 @@ public class MatchList extends JTable {
 					if (scores != null && match.getStatus() == ScheduleItem.COMPLETE)
 						return scores.get(-cid - 1);
 					else
-						return 0;
+						return "0";
 				}
 			}
 			return "";
@@ -341,7 +341,7 @@ public class MatchList extends JTable {
 				// Double click in the list.
 				int[] rows = getSelectedRows();
 				if (rows.length == 1)
-					status.getClient().editQueue(matches.get(rows[0]));
+					status.getClient().editQueue((ScheduleItem)matches.get(rows[0]));
 			}
 		}
 	}

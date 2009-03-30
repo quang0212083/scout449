@@ -44,11 +44,11 @@ public class WebServer implements Runnable {
 	/**
 	 * The worker list.
 	 */
-	protected ArrayList<Worker> threads;
+	protected ArrayList threads;
 	/**
 	 * The registry of listeners.
 	 */
-	protected List<ServerPage> registry;
+	protected List registry;
 	/**
 	 * Server running?
 	 */
@@ -63,8 +63,8 @@ public class WebServer implements Runnable {
 	 */
 	public WebServer() {
 		running = false;
-		threads = new ArrayList<Worker>(numWorkers);
-		registry = new ArrayList<ServerPage>(6);
+		threads = new ArrayList(numWorkers);
+		registry = new ArrayList(6);
 	}
 	/**
 	 * Creates a web server on the specified port.
@@ -155,7 +155,7 @@ public class WebServer implements Runnable {
 			while (running) {
 				s = ss.accept();
 				for (i = (index + 1) % numWorkers; i != index; i = (i + 1) % numWorkers)
-					if (threads.get(i).setSocket(s)) break;
+					if (((Worker)threads.get(i)).setSocket(s)) break;
 				if (i == index) {
 					AppLib.printDebug("Load factor! Starting new worker");
 					Worker w = new Worker(this);
@@ -173,7 +173,7 @@ public class WebServer implements Runnable {
 				AppLib.debugException(e);
 		}
 		for (i = 0; i < threads.size(); i++)
-			threads.get(i).stop();
+			((Worker)threads.get(i)).stop();
 	}
 }
 
@@ -278,7 +278,7 @@ class Worker implements Runnable {
 		out.print("HTTP/1.0 ");
 		out.print(code);
 		out.print(" ");
-		out.print(HTTPConstants.messages.get(code));
+		out.print(HTTPConstants.messages.get(new Integer(code)));
 		out.print("\r\n");
 	}
 	/**
@@ -289,8 +289,8 @@ class Worker implements Runnable {
 	 * @return a Map object with the keys and values represented
 	 *  by this GET string
 	 */
-	public static Map<String, String> parseGET(String get, boolean decode) {
-		Map<String, String> map = new HashMap<String, String>();
+	public static Map parseGET(String get, boolean decode) {
+		Map map = new HashMap();
 		if (get == null || get.length() < 1) return map;
 		StringTokenizer str = new StringTokenizer(get, "&");
 		String keyval; String key; String val;
@@ -318,7 +318,7 @@ class Worker implements Runnable {
 	 * @return a Map object with the keys and values represented
 	 *  by this GET string
 	 */
-	public static Map<String, String> parseGET(String get) {
+	public static Map parseGET(String get) {
 		return parseGET(get, true);
 	}
 	/**
@@ -438,15 +438,20 @@ class Worker implements Runnable {
 					restOfData.append(buf, 0, n);
 				} while (n >= buf.length);
 			}
-			url = url.replaceAll("\\.\\.\\/", "");
+			StringBuffer nURL = new StringBuffer(256);
+			for (int i = 0; i < url.length(); i++) {
+				if (url.startsWith("../", i))
+					i += 2;
+				else
+					nURL.append(url.charAt(i));
+			}
+			url = nURL.toString();
 			if (url.startsWith("/")) url = url.substring(1);
-			Iterator<ServerPage> it = parent.registry.iterator();
+			Iterator it = parent.registry.iterator();
 			ServerPage item;
-			//AppLib.printDebug("Asked for " + url);
 			while (it.hasNext()) {
-				item = it.next();
+				item = (ServerPage)it.next();
 				if (item.match(url)) {
-					//AppLib.printDebug("Matched expression " + e.pattern());
 					item.action(url, inet, restOfData.toString().trim(), out,
 						sock.getOutputStream());
 					out.flush();
@@ -460,7 +465,7 @@ class Worker implements Runnable {
 			if (targ.isDirectory()) {
 				File ind;
 				for (int i = 0; i < HTTPConstants.indices.size(); i++) {
-					ind = new File(targ, HTTPConstants.indices.get(i));
+					ind = new File(targ, (String)HTTPConstants.indices.get(i));
 					if (ind.exists()) {
 						targ = ind;
 						break;
@@ -537,8 +542,8 @@ class Worker implements Runnable {
 			ext = ext.substring(ext.lastIndexOf('.'));
 		else
 			ext = "";
-		String ct = HTTPConstants.mimeTypes.get(ext); 
-		if (ct == null) ct = HTTPConstants.mimeTypes.get("");
+		String ct = (String)HTTPConstants.mimeTypes.get(ext); 
+		if (ct == null) ct = (String)HTTPConstants.mimeTypes.get("");
 		printHeaders(out, targ.length(), ct);
 	}
 	/**
@@ -646,15 +651,15 @@ final class HTTPConstants {
 	/**
 	 * Map of extensions to content types.
 	 */
-	public static HashMap<String, String> mimeTypes = new HashMap<String, String>(38);
+	public static HashMap mimeTypes = new HashMap(38);
 	/**
 	 * Map of HTTP codes to status messages.
 	 */
-	public static HashMap<Integer, String> messages = new HashMap<Integer, String>(46);
+	public static HashMap messages = new HashMap(46);
 	/**
 	 * List of acceptable directory indices.
 	 */
-	public static List<String> indices = new ArrayList<String>();
+	public static List indices = new ArrayList();
 
 	static {
 		// default to application/octet-stream - can't go wrong with binary
@@ -692,40 +697,40 @@ final class HTTPConstants {
 		indices.add("default.htm");
 		indices.add("default.html");
 
-		messages.put(200, "OK");
-		messages.put(201, "Created");
-		messages.put(202, "Accepted");
-		messages.put(203, "Non-Authoritative Content");
-		messages.put(204, "No Content");
-		messages.put(205, "Connection Reset");
-		messages.put(206, "Partial Content");
-		messages.put(300, "Multiple Choices");
-		messages.put(301, "Moved Permanently");
-		messages.put(302, "Moved Temporarily");
-		messages.put(303, "See Other");
-		messages.put(304, "Not Modified");
-		messages.put(305, "Use Proxy");
-		messages.put(400, "Bad Request");
-		messages.put(401, "Unauthorized");
-		messages.put(402, "Payment Required");
-		messages.put(403, "Forbidden");
-		messages.put(404, "Not Found");
-		messages.put(405, "Bad Method");
-		messages.put(406, "Not Acceptable");
-		messages.put(407, "Proxy Authentication Required");
-		messages.put(408, "Client Timeout");
-		messages.put(409, "Conflict");
-		messages.put(410, "Gone");
-		messages.put(411, "Length Required");
-		messages.put(412, "Precondition Failed");
-		messages.put(413, "Entity Too Large");
-		messages.put(414, "Request Too Long");
-		messages.put(415, "Unsupported Method Type");
-		messages.put(500, "Internal Server Error");
-		messages.put(501, "Internal Script Error");
-		messages.put(502, "Bad Gateway");
-		messages.put(503, "Unavailable");
-		messages.put(504, "Gateway Timed Out");
-		messages.put(505, "Unsupported Version");
+		messages.put(new Integer(200), "OK");
+		messages.put(new Integer(201), "Created");
+		messages.put(new Integer(202), "Accepted");
+		messages.put(new Integer(203), "Non-Authoritative Content");
+		messages.put(new Integer(204), "No Content");
+		messages.put(new Integer(205), "Connection Reset");
+		messages.put(new Integer(206), "Partial Content");
+		messages.put(new Integer(300), "Multiple Choices");
+		messages.put(new Integer(301), "Moved Permanently");
+		messages.put(new Integer(302), "Moved Temporarily");
+		messages.put(new Integer(303), "See Other");
+		messages.put(new Integer(304), "Not Modified");
+		messages.put(new Integer(305), "Use Proxy");
+		messages.put(new Integer(400), "Bad Request");
+		messages.put(new Integer(401), "Unauthorized");
+		messages.put(new Integer(402), "Payment Required");
+		messages.put(new Integer(403), "Forbidden");
+		messages.put(new Integer(404), "Not Found");
+		messages.put(new Integer(405), "Bad Method");
+		messages.put(new Integer(406), "Not Acceptable");
+		messages.put(new Integer(407), "Proxy Authentication Required");
+		messages.put(new Integer(408), "Client Timeout");
+		messages.put(new Integer(409), "Conflict");
+		messages.put(new Integer(410), "Gone");
+		messages.put(new Integer(411), "Length Required");
+		messages.put(new Integer(412), "Precondition Failed");
+		messages.put(new Integer(413), "Entity Too Large");
+		messages.put(new Integer(414), "Request Too Long");
+		messages.put(new Integer(415), "Unsupported Method Type");
+		messages.put(new Integer(500), "Internal Server Error");
+		messages.put(new Integer(501), "Internal Script Error");
+		messages.put(new Integer(502), "Bad Gateway");
+		messages.put(new Integer(503), "Unavailable");
+		messages.put(new Integer(504), "Gateway Timed Out");
+		messages.put(new Integer(505), "Unsupported Version");
 	}
 }

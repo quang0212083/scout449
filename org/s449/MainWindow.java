@@ -16,7 +16,7 @@ import org.s449.ui.*;
  * @author Stephen Carlson
  * @version 4.0.0
  */
-public class MainWindow extends Box implements Runnable {
+public class MainWindow extends JPanel implements Runnable {
 	private static final long serialVersionUID = 0L;
 	/**
 	 * The button to refresh domains.
@@ -120,7 +120,7 @@ public class MainWindow extends Box implements Runnable {
 	private ScoutStatus status;
 
 	public MainWindow(ScoutStatus stat) {
-		super(BoxLayout.Y_AXIS);
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		this.status = stat;
 		AppLib.printDebug("Setting up auth window");
 		lastHeight = -1;
@@ -134,13 +134,9 @@ public class MainWindow extends Box implements Runnable {
 		tabs.setOpaque(false);
 		tabs.setBackground(Constants.LIGHT_BLUE_UI);
 		tabs.addTab("login", createLogin());
-		tabs.setMnemonicAt(0, KeyEvent.VK_O);
 		tabs.addTab("server", createServer());
-		tabs.setMnemonicAt(1, KeyEvent.VK_S);
 		tabs.addTab("transfer", createTransfer());
-		tabs.setMnemonicAt(2, KeyEvent.VK_T);
 		tabs.addTab("configure", createConfig());
-		tabs.setMnemonicAt(3, KeyEvent.VK_C);
 		tabs.setPreferredSize(new Dimension(380, 250));
 		tabs.setMaximumSize(tabs.getPreferredSize());
 		tabs.addChangeListener(events);
@@ -182,7 +178,8 @@ public class MainWindow extends Box implements Runnable {
 		JComponent middle = new JPanel(new VerticalFlow(true));
 		middle.setOpaque(false);
 		middle.add(Box.createVerticalStrut(20));
-		horiz = new Box(BoxLayout.X_AXIS);
+		horiz = new JPanel();
+		horiz.setLayout(new BoxLayout(horiz, BoxLayout.X_AXIS));
 		horiz.setOpaque(false);
 		horiz.add(Box.createHorizontalStrut(20));
 		horiz.add(new AntialiasedJLabel("User ID:"));
@@ -195,7 +192,8 @@ public class MainWindow extends Box implements Runnable {
 		horiz.add(Box.createHorizontalStrut(20));
 		middle.add(horiz);
 		middle.add(Box.createVerticalStrut(2));
-		horiz = new Box(BoxLayout.X_AXIS);
+		horiz = new JPanel();
+		horiz.setLayout(new BoxLayout(horiz, BoxLayout.X_AXIS));
 		horiz.setOpaque(false);
 		horiz.add(Box.createHorizontalStrut(20));
 		horiz.add(new AntialiasedJLabel("Passkey:"));
@@ -238,7 +236,8 @@ public class MainWindow extends Box implements Runnable {
 		JComponent middle = new JPanel(new VerticalFlow(true));
 		middle.setOpaque(false);
 		middle.add(Box.createVerticalStrut(50));
-		horiz = new Box(BoxLayout.X_AXIS);
+		horiz = new JPanel();
+		horiz.setLayout(new BoxLayout(horiz, BoxLayout.X_AXIS));
 		horiz.setOpaque(false);
 		horiz.add(Box.createHorizontalStrut(20));
 		horiz.add(new AntialiasedJLabel("To domain:"));
@@ -273,7 +272,8 @@ public class MainWindow extends Box implements Runnable {
 		JComponent middle = new JPanel(new VerticalFlow(true));
 		middle.setOpaque(false);
 		middle.add(Box.createVerticalStrut(50));
-		horiz = new Box(BoxLayout.X_AXIS);
+		horiz = new JPanel();
+		horiz.setLayout(new BoxLayout(horiz, BoxLayout.X_AXIS));
 		horiz.setOpaque(false);
 		horiz.add(Box.createHorizontalStrut(20));
 		horiz.add(new AntialiasedJLabel("Select Regional:"));
@@ -331,7 +331,8 @@ public class MainWindow extends Box implements Runnable {
 		JComponent middle = new JPanel(new VerticalFlow(true));
 		middle.setOpaque(false);
 		middle.add(Box.createVerticalStrut(30));
-		horiz = new Box(BoxLayout.X_AXIS);
+		horiz = new JPanel();
+		horiz.setLayout(new BoxLayout(horiz, BoxLayout.X_AXIS));
 		horiz.setOpaque(false);
 		horiz.add(Box.createHorizontalStrut(20));
 		horiz.add(new AntialiasedJLabel("User ID:"));
@@ -344,7 +345,8 @@ public class MainWindow extends Box implements Runnable {
 		horiz.add(Box.createHorizontalStrut(20));
 		middle.add(horiz);
 		middle.add(Box.createVerticalStrut(2));
-		horiz = new Box(BoxLayout.X_AXIS);
+		horiz = new JPanel();
+		horiz.setLayout(new BoxLayout(horiz, BoxLayout.X_AXIS));
 		horiz.setOpaque(false);
 		horiz.add(Box.createHorizontalStrut(20));
 		horiz.add(new AntialiasedJLabel("Passkey:"));
@@ -359,7 +361,8 @@ public class MainWindow extends Box implements Runnable {
 		horiz.add(Box.createHorizontalStrut(20));
 		middle.add(horiz);
 		middle.add(Box.createVerticalStrut(2));
-		shOpt = new Box(BoxLayout.X_AXIS);
+		shOpt = new JPanel();
+		shOpt.setLayout(new BoxLayout(shOpt, BoxLayout.X_AXIS));
 		shOpt.setOpaque(false);
 		shOpt.add(Box.createHorizontalStrut(20));
 		shOpt.add(new AntialiasedJLabel("Domain:"));
@@ -414,9 +417,9 @@ public class MainWindow extends Box implements Runnable {
 		NPC3.detect();
 		domain.removeAllItems();
 		NPCServer serve;
-		Iterator<NPCServer> it = NPC3.getServers().iterator();
+		Iterator it = NPC3.getServers().iterator();
 		while (it.hasNext()) {
-			serve = it.next();
+			serve = (NPCServer)it.next();
 			domain.addItem(serve.getName() + " - " + serve.getIP());
 		}
 		domain.addItem("local - 127.0.0.1");

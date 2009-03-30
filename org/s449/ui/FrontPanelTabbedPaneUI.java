@@ -72,6 +72,7 @@ public class FrontPanelTabbedPaneUI extends BasicTabbedPaneUI {
 		else
 			g2d.setColor(Constants.LIGHT_GRAY);
 		g2d.fill(path);
+		paintTabArea(g, tabPlacement, 0);
 	}
 	protected int getTabLabelShiftY(int tabPlacement, int tabIndex,
 			boolean isSelected) {
@@ -95,7 +96,6 @@ public class FrontPanelTabbedPaneUI extends BasicTabbedPaneUI {
 		g2d.fillRect(0, tabPane.getHeight() - rects[selectedIndex].height - 4,
 			tabPane.getWidth(), tabPane.getHeight());
 		g2d.setComposite(composite);
-		super.paintTabArea(g, tabPlacement, selectedIndex);
 	}
 	protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
 		return super.calculateTabWidth(tabPlacement, tabIndex, boldFontMetrics) + 4;

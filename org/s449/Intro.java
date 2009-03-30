@@ -9,7 +9,7 @@ import javax.swing.*;
  * @author Stephen Carlson
  * @version 2.0.0
  */
-public class Intro extends JFrame {
+public class Intro extends JWindow {
 	private static final long serialVersionUID = 0L;
 
 	/**
@@ -51,19 +51,22 @@ public class Intro extends JFrame {
 		}
 	}
 
+	private JFrame window;
+
 	/**
 	 * Introduce the Scout449 program!
 	 * 
 	 * @param stat the Scout449 responsible for this object
 	 */
-	public Intro(Scout449 stat) {
-		super("Loading Scout449");
+	public Intro(Scout449 stat, JFrame win) {
+		super(win);
+		window = win;
+		win.setTitle("Loading Scout449");
 		setVisible(false);
-		setUndecorated(true);
-		setIconImage(stat.getImage("winicon"));
+		win.setIconImage(stat.getImage("winicon"));
 		loadImage();
 		getRootPane().putClientProperty("Window.shadow", Boolean.FALSE);
-		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		win.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		Container c = getContentPane();
 		c.setLayout(new BoxLayout(c, BoxLayout.Y_AXIS));
 		c.add(Box.createVerticalGlue());
@@ -78,6 +81,10 @@ public class Intro extends JFrame {
 		setBounds((ss.width - Constants.INTRO_WIDTH) / 2,
 			(ss.height - Constants.INTRO_HEIGHT) / 2,
 			Constants.INTRO_WIDTH, Constants.INTRO_HEIGHT);
+		win.setBounds((ss.width - Constants.INTRO_WIDTH) / 2,
+			(ss.height - Constants.INTRO_HEIGHT) / 2,
+			Constants.INTRO_WIDTH, Constants.INTRO_HEIGHT);
+		win.setVisible(true);
 		setVisible(true);
 	}
 	public void paint(Graphics g) {
@@ -86,5 +93,9 @@ public class Intro extends JFrame {
 			g.drawImage(screenImage, -getX(), -getY(), null);
 		if (fileImage != null)
 			g.drawImage(fileImage, 0, 0, null);
+	}
+	public void setVisible(boolean visible) {
+		window.setVisible(visible);
+		super.setVisible(visible);
 	}
 }

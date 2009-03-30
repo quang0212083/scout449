@@ -2,6 +2,7 @@ package org.s449;
 
 import javax.swing.*;
 import javax.swing.table.*;
+import org.s449.HotkeyList.Hotkey;
 import org.s449.ui.*;
 import java.util.*;
 import java.awt.event.*;
@@ -21,7 +22,7 @@ public class TeamList extends JPanel {
 	/**
 	 * List of available teams.
 	 */
-	private List<Team> data;
+	private List data;
 	/**
 	 * The table with the team list.
 	 */
@@ -121,8 +122,8 @@ public class TeamList extends JPanel {
 		sp.setBorder(ButtonFactory.getThinBorder());
 		add(sp, BorderLayout.CENTER);
 		// Add the buttons in the bottom pane.
-		JComponent editPane = new Box(BoxLayout.X_AXIS);
-		editPane.setOpaque(false);
+		java.awt.Container editPane = new Box(BoxLayout.X_AXIS);
+		editPane.setBackground(Constants.WHITE);
 		editPane.add(Box.createHorizontalStrut(20));
 		if (status.getUser().isAdmin()) {
 			// add, delete
@@ -140,7 +141,7 @@ public class TeamList extends JPanel {
 		editPane.add(Box.createHorizontalStrut(20));
 		add(editPane, BorderLayout.SOUTH);
 		editPane = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-		editPane.setOpaque(false);
+		editPane.setBackground(Constants.WHITE);
 		editPane.add(new JLabel("Lookup Team #:"));
 		editPane.add(qe);
 		add(editPane, BorderLayout.NORTH);
@@ -151,7 +152,7 @@ public class TeamList extends JPanel {
 	 * Sets up the CID array.
 	 */
 	public void init() {
-		List<UDF> udfs = status.getDataStore().getUDFs();
+		List udfs = status.getDataStore().getUDFs();
 		HotkeyList hotkeys = status.getDataStore().getHotkeys();
 		// set up CIDs
 		if (status.getDataStore().isAdvScore())
@@ -188,11 +189,11 @@ public class TeamList extends JPanel {
 				width[j] = myWidth[cids[j] - 100];
 				titles[j] = myTitles[cids[j] - 100];
 			} else if (cids[j] >= 0 && cids[j] < udfs.size()) {
-				titles[j] = udfs.get(cids[j]).getName();
+				titles[j] = ((UDF)udfs.get(cids[j])).getName();
 				width[j] = SwingUtilities.computeStringWidth(
 					list.getFontMetrics(list.getFont()), titles[j]) + 30;
 			} else if (cids[j] < 0 && cids[j] > -2 - hotkeys.size()) {
-				titles[j] = hotkeys.getList().get(-cids[j] - 1).getDescription();
+				titles[j] = ((Hotkey)hotkeys.getList().get(-cids[j] - 1)).getDescription();
 				width[j] = SwingUtilities.computeStringWidth(
 					list.getFontMetrics(list.getFont()), titles[j]) + 30;
 			}
@@ -227,15 +228,15 @@ public class TeamList extends JPanel {
 		String text = searchBox.getText();
 		if (text == null || text.length() < 1) return;
 		text = text.toLowerCase();
-		ArrayList<Team> results = new ArrayList<Team>();
-		ArrayList<String> what = new ArrayList<String>();
+		ArrayList results = new ArrayList();
+		ArrayList what = new ArrayList();
 		// search the whole team data list
 		Team team;
-		Iterator<Team> it = data.iterator();
+		Iterator it = data.iterator();
 		String comment;
-		Iterator<Comment> it2;
+		Iterator it2;
 		while (it.hasNext()) {
-			team = it.next();
+			team = (Team)it.next();
 			if (team.getName().toLowerCase().indexOf(text) >= 0) {
 				results.add(team);
 				what.add("Team name");
@@ -246,7 +247,7 @@ public class TeamList extends JPanel {
 			}
 			it2 = team.getComments().iterator();
 			while (it2.hasNext()) {
-				comment = it2.next().getText();
+				comment = ((Comment)it2.next()).getText();
 				if (comment.length() > 0 && comment.toLowerCase().indexOf(text) >= 0) {
 					results.add(team);
 					what.add("\"" + comment + "\"");
@@ -258,9 +259,10 @@ public class TeamList extends JPanel {
 			AppLib.printWarn(status.getWindow(), "No results for search: \"" + text + "\"");
 		else {
 			String[] res = new String[results.size()];
-			for (int i = 0; i < results.size(); i++)
-				res[i] = results.get(i).getNumber() + " " + results.get(i).getName() + ": " +
-					what.get(i);
+			for (int i = 0; i < results.size(); i++) {
+				team = (Team)results.get(i);
+				res[i] = team.getNumber() + " " + team.getName() + ": " + what.get(i);
+			}
 			String ans = (String)JOptionPane.showInputDialog(status.getWindow(), "Search for \"" +
 				text + "\" matched:", "Search Results", JOptionPane.INFORMATION_MESSAGE, null,
 				res, res[0]);
@@ -320,45 +322,45 @@ public class TeamList extends JPanel {
 		public int getRowCount() { return data.size(); }
 		public int getColumnCount() { return cids.length; }
 		public Object getValueAt(int row, int col) {
-			Team r = data.get(row);
+			Team r = (Team)data.get(row);
 			switch(cids[col]) {
 			case 100:
-				return r.getNumber();
+				return new Integer(r.getNumber());
 			case 101:
 				return r.getName();
 			case 102:
-				return r.getWins();
+				return new Integer(r.getWins());
 			case 103:
-				return r.getLosses();
+				return new Integer(r.getLosses());
 			case 104:
-				return r.getTies();
+				return new Integer(r.getTies());
 			case 105:
-				return r.getWinPct();
+				return new Double(r.getWinPct());
 			case 106:
-				return r.getPPG();
+				return new Double(r.getPPG());
 			case 107:
-				return r.getTeamPPG();
+				return new Double(r.getTeamPPG());
 			case 108:
-				return r.getEnPPG();
+				return new Double(r.getEnPPG());
 			case 109:
-				return r.getRating() == 0 ? "None" : r.getRating();
+				return (r.getRating() == 0) ? "None" : Double.toString(r.getRating());
 			case 110:
 				return r.getType();
 			case 111:
-				return r.getFIRSTRank();
+				return new Integer(r.getFIRSTRank());
 			case 112:
-				return r.getSP();
+				return new Integer(r.getSP());
 			case 113:
-				return r.getRP();
+				return new Integer(r.getRP());
 			default:
 				HotkeyList hotkeys = status.getDataStore().getHotkeys();
-				List<UDF> udfs = status.getDataStore().getUDFs();
+				List udfs = status.getDataStore().getUDFs();
 				if (cids[col] >= 0 && cids[col] < udfs.size())
 					return r.getData().get(cids[col]);
 				else if (cids[col] < 0 && cids[col] > -2 - hotkeys.size() &&
 						-cids[col] - 1 < r.getScores().size())
 					return r.getScores().get(-cids[col] - 1);
-				return 0;
+				return "0";
 			}
 		}
 		/**
@@ -400,10 +402,16 @@ public class TeamList extends JPanel {
 		}
     }
 
+	private int signum(double what) {
+		if (what < 0.) return -1;
+		if (what == 0.) return 0;
+		return 1;
+	}
+
 	/**
 	 * A comparator to sort team data objects by field.
 	 */
-	private class TeamComparator implements Comparator<Team> {
+	private class TeamComparator implements Comparator {
 		/**
 		 * The column by which to sort (PREPOSITION)
 		 */
@@ -423,7 +431,9 @@ public class TeamList extends JPanel {
 			columnToSort = toSort;
 			isSortAsc = asc;
 		}
-		public int compare(Team one, Team two) {
+		public int compare(Object o, Object t) {
+			Team one = (Team)o;
+			Team two = (Team)t;
 			if (isSortAsc) return rawCompare(one, two);
 			else return -rawCompare(one, two);
 		}
@@ -447,15 +457,15 @@ public class TeamList extends JPanel {
 			case 104:
 				return one.getTies() - two.getTies();
 			case 105:
-				return (int)Math.signum(one.getWinPct() - two.getWinPct());
+				return signum(one.getWinPct() - two.getWinPct());
 			case 106:
-				return (int)Math.signum(one.getPPG() - two.getPPG());
+				return signum(one.getPPG() - two.getPPG());
 			case 107:
-				return (int)Math.signum(one.getTeamPPG() - two.getTeamPPG());
+				return signum(one.getTeamPPG() - two.getTeamPPG());
 			case 108:
-				return (int)Math.signum(one.getEnPPG() - two.getEnPPG());
+				return signum(one.getEnPPG() - two.getEnPPG());
 			case 109:
-				return (int)Math.signum(one.getRating() - two.getRating());
+				return signum(one.getRating() - two.getRating());
 			case 110:
 				return one.getType().compareTo(two.getType());
 			case 111:
@@ -466,18 +476,19 @@ public class TeamList extends JPanel {
 				return one.getRP() - two.getRP();
 			default:
 				HotkeyList hotkeys = status.getDataStore().getHotkeys();
-				List<UDF> udfs = status.getDataStore().getUDFs();
+				List udfs = status.getDataStore().getUDFs();
 				if (cids[columnToSort] >= 0 && cids[columnToSort] < udfs.size())
-					return one.getData().get(cids[columnToSort]) -
-						two.getData().get(cids[columnToSort]);
+					return ((Integer)one.getData().get(cids[columnToSort])).intValue() -
+						((Integer)two.getData().get(cids[columnToSort])).intValue();
 				else if (cids[columnToSort] < 0 && cids[columnToSort] > -2 - hotkeys.size()) {
 					int index = -cids[columnToSort] - 1;
 					if (index < one.getScores().size() && index < two.getScores().size())
-						return one.getScores().get(index) - two.getScores().get(index);
+						return ((Integer)one.getScores().get(index)).intValue() -
+							((Integer)two.getScores().get(index)).intValue();
 					else if (index < one.getScores().size())
-						return one.getScores().get(index);
+						return ((Integer)one.getScores().get(index)).intValue();
 					else if (index < two.getScores().size())
-						return -two.getScores().get(index);
+						return -((Integer)two.getScores().get(index)).intValue();
 				}
 				return 0;
 			}
@@ -504,7 +515,7 @@ public class TeamList extends JPanel {
 				// Double click in the list.
 				int row = list.getSelectedRow();
 				list.requestFocus();
-				Team tm = data.get(row);
+				Team tm = (Team)data.get(row);
 				if (tm != null) openComments(tm);
 			}
 		}
@@ -538,7 +549,7 @@ public class TeamList extends JPanel {
 				// remove a team
 				int row = list.getSelectedRow();
 				if (row < 0 || row >= data.size()) return;
-				int num = data.get(row).getNumber();
+				int num = ((Team)data.get(row)).getNumber();
 				if (AppLib.confirm(status.getWindow(), "Really delete team " + num +
 					"?\n\nWARNING: Removing a team can lead to serious issues!")) {
 					// danger danger!
@@ -549,7 +560,7 @@ public class TeamList extends JPanel {
 				// remove a team
 				int row = list.getSelectedRow();
 				if (row < 0 || row >= data.size()) return;
-				Team team = data.get(row);
+				Team team = (Team)data.get(row);
 				String teamName = JOptionPane.showInputDialog(status.getWindow(),
 					"Enter the new team name for " + team + ":", "Add Team",
 					JOptionPane.QUESTION_MESSAGE);

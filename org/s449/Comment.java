@@ -9,7 +9,7 @@ import java.util.*;
  * @author Stephen Carlson
  * @version 4.0.0
  */
-public class Comment implements java.io.Serializable, Comparable<Comment> {
+public class Comment implements java.io.Serializable, Comparable {
 	private static final long serialVersionUID = 4321978342178349875L;
 
 	/**
@@ -31,7 +31,7 @@ public class Comment implements java.io.Serializable, Comparable<Comment> {
 	/**
 	 * The UDFs assigned to the team in this comment.
 	 */
-	private List<Integer> udfs;
+	private List udfs;
 	/**
 	 * The date and time of last update.
 	 */
@@ -47,7 +47,7 @@ public class Comment implements java.io.Serializable, Comparable<Comment> {
 	 * @param udfs the UDFs given, or null if none
 	 * @param when the date of update
 	 */
-	public Comment(UserData owner, ScheduleItem match, String text, int rating, List<Integer> udfs,
+	public Comment(UserData owner, ScheduleItem match, String text, int rating, List udfs,
 			long when) {
 		this.owner = owner;
 		this.match = match;
@@ -125,13 +125,15 @@ public class Comment implements java.io.Serializable, Comparable<Comment> {
 	 *
 	 * @return the UDFs
 	 */
-	public List<Integer> getUDFs() {
+	public List getUDFs() {
 		return udfs;
 	}
 	public int hashCode() {
 		return text.hashCode();
 	}
-	public int compareTo(Comment other) {
+	public int compareTo(Object o) {
+		if (!(o instanceof Comment)) return 0;
+		Comment other = (Comment)o;
 		if (match != null && other.match == null) return 1;
 		if (match == null && other.match != null) return -1;
 		if (match != null && other.match != null) {

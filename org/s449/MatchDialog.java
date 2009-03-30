@@ -90,8 +90,8 @@ public class MatchDialog extends BasicDialog {
 		label = new JComboBox();
 		label.addKeyListener(wl);
 		label.removeAllItems();
-		List<MatchLabel> labels = status.getDataStore().getLabels();
-		Iterator<MatchLabel> it = labels.iterator();
+		List labels = status.getDataStore().getLabels();
+		Iterator it = labels.iterator();
 		while (it.hasNext())
 			label.addItem(it.next());
 		label.setMaximumSize(label.getPreferredSize());
@@ -130,9 +130,7 @@ public class MatchDialog extends BasicDialog {
 			blue[i].setAlignmentX(JComponent.CENTER_ALIGNMENT);
 			red[i].setAlignmentX(JComponent.CENTER_ALIGNMENT);
 			sBlue[i] = new JCheckBox("S");
-			sBlue[i].setFocusable(false);
 			sRed[i] = new JCheckBox("S");
-			sRed[i].setFocusable(false);
 			sBlue[i].setAlignmentX(JComponent.CENTER_ALIGNMENT);
 			sRed[i].setAlignmentX(JComponent.CENTER_ALIGNMENT);
 			if (i == ScheduleItem.TPA - 1) {
@@ -190,12 +188,10 @@ public class MatchDialog extends BasicDialog {
 		JButton ok = new JButton("OK");
 		ok.setActionCommand("saveMatch");
 		ok.setMnemonic(KeyEvent.VK_O);
-		ok.setFocusable(false);
 		ok.addActionListener(events);
 		JButton can = new JButton("Cancel");
 		can.setActionCommand("cancel");
 		can.setMnemonic(KeyEvent.VK_C);
-		can.setFocusable(false);
 		can.addActionListener(events);
 		row = new JPanel();
 		row.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 5));
@@ -265,11 +261,11 @@ public class MatchDialog extends BasicDialog {
 	 * 
 	 * @return the teams
 	 */
-	public List<Integer> getTeams() {
-		List<Integer> ret = new ArrayList<Integer>(ScheduleItem.TPA * 2);
+	public List getTeams() {
+		List ret = new ArrayList(ScheduleItem.TPA * 2);
 		for (int i = 0; i < ScheduleItem.TPA; i++)
 			try {
-				ret.add(Integer.parseInt(red[i].getText()));
+				ret.add(Integer.valueOf(red[i].getText()));
 			} catch (NumberFormatException e) {
 				AppLib.printWarn(window, "Please enter a valid team number for Red " + (i + 1));
 				red[i].requestFocus();
@@ -278,7 +274,7 @@ public class MatchDialog extends BasicDialog {
 			}
 		for (int i = 0; i < ScheduleItem.TPA; i++)
 			try {
-				ret.add(Integer.parseInt(blue[i].getText()));
+				ret.add(Integer.valueOf(blue[i].getText()));
 			} catch (NumberFormatException e) {
 				AppLib.printWarn(window, "Please enter a valid team number for Blue " + (i + 1));
 				blue[i].requestFocus();
@@ -292,16 +288,16 @@ public class MatchDialog extends BasicDialog {
 	 * 
 	 * @param list the new teams
 	 */
-	public void setTeams(List<Integer> list) {
+	public void setTeams(List list) {
 		clearTeamFields();
 		if (list == null || list.size() < ScheduleItem.TPA * 2) return;
-		Iterator<Integer> it = list.iterator();
+		Iterator it = list.iterator();
 		for (int i = 0; i < 3; i++) {
-			red[i].setText(Integer.toString(it.next()));
+			red[i].setText(it.next().toString());
 			red[i].update();
 		}
 		for (int i = 0; i < 3; i++) {
-			blue[i].setText(Integer.toString(it.next()));
+			blue[i].setText(it.next().toString());
 			blue[i].update();
 		}
 	}
@@ -331,9 +327,15 @@ public class MatchDialog extends BasicDialog {
 		BitSet sur = new BitSet(2 * ScheduleItem.TPA);
 		int i = 0;
 		for (; i < ScheduleItem.TPA; i++)
-			sur.set(i, sRed[i].isSelected());
+			if (sRed[i].isSelected())
+				sur.set(i);
+			else
+				sur.clear(i);
 		for (; i < 2 * ScheduleItem.TPA; i++)
-			sur.set(i, sBlue[i - ScheduleItem.TPA].isSelected());
+			if (sBlue[i - ScheduleItem.TPA].isSelected())
+				sur.set(i);
+			else
+				sur.clear(i);
 		return sur;
 	}
 	/**

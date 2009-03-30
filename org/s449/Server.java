@@ -29,11 +29,9 @@ import java.awt.image.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.regex.*;
-import javax.imageio.*;
 import javax.swing.*;
-
 import org.s449.Client.JpegFilter;
+import org.s449.imageio.*;
 import org.s449.ui.*;
 
 /**
@@ -76,13 +74,9 @@ public class Server implements ServerPage, Runnable {
 	 */
 	public static final String defaultConfigName = "users.dat";
 	/**
-	 * The web pattern to match.
-	 */
-	private static final Pattern toMatch = Pattern.compile("[^.]*?(\\?.*)?");
-	/**
 	 * The SID find-and-replace pattern to match.
 	 */
-	private static final Pattern match_sid = Pattern.compile("\\%SID\\%");
+	private static final String match_sid = "%SID%";
 	/**
 	 * The web session timeout in ms.
 	 */
@@ -102,7 +96,7 @@ public class Server implements ServerPage, Runnable {
 	/**
 	 * List of clients connected.
 	 */
-	private ArrayList<ScoutConnection> outputs;
+	private ArrayList outputs;
 	/**
 	 * The default control port.
 	 */
@@ -166,7 +160,7 @@ public class Server implements ServerPage, Runnable {
 	/**
 	 * The web server session map.
 	 */
-	private Map<String, Session> sid;
+	private Map sid;
 	/**
 	 * The time of the last update.
 	 */
@@ -236,19 +230,19 @@ public class Server implements ServerPage, Runnable {
 		status = stat;
 		events = new EventListener();
 		status.addActionListener(events);
-		Map<String, String> input = stat.getMaster().getCommandLine();
+		Map input = stat.getMaster().getCommandLine();
 		scoutName = defaultScoutName;
 		configName = defaultConfigName;
 		// check for scout data file change
-		String param = input.get("-f");
+		String param = (String)input.get("-f");
 		if (param != null && (param = param.trim()).length() > 0)
 			scoutName = param;
 		// check for config file change
-		param = input.get("-c");
+		param = (String)input.get("-c");
 		if (param != null && (param = param.trim()).length() > 0)
 			configName = param;
 		// check for web port change
-		param = input.get("-w");
+		param = (String)input.get("-w");
 		if (AppLib.positiveInteger(param))
 			wPort = Integer.parseInt(param) % 60000;
 		// compute local IP
@@ -268,12 +262,12 @@ public class Server implements ServerPage, Runnable {
 	 */
 	public Event[] eventList() {
 		if (data == null) return null;
-		List<Event> list = data.getData().getEvents();
+		List list = data.getData().getEvents();
 		Event[] out = new Event[list.size()];
 		int i = 0;
-		Iterator<Event> it = list.iterator();
+		Iterator it = list.iterator();
 		while (it.hasNext())
-			out[i++] = it.next();
+			out[i++] = (Event)it.next();
 		return out;
 	}
 	/**
@@ -284,7 +278,7 @@ public class Server implements ServerPage, Runnable {
 		AppLib.printDebug("Starting server");
 		sstat.setStatus(StatusBox.STATUS_SOSO);
 		sstat.setText("Server Starting");
-		sid = new HashMap<String, Session>(64);
+		sid = new HashMap(64);
 		lastSend = 0L;
 		sendEventually = false;
 		if (data == null) {
@@ -312,7 +306,7 @@ public class Server implements ServerPage, Runnable {
 			//  last configuration date, it's last year's!
 			Calendar one = Calendar.getInstance();
 			Calendar two = Calendar.getInstance();
-			two.setTimeInMillis(((Long)o[0]).longValue());
+			two.setTime(new Date(((Long)o[0]).longValue()));
 			one.add(Calendar.MONTH, -6);
 			if (one.after(two) &&
 				!AppLib.confirm(status.getWindow(), "It seems like the scouting data is over " +
@@ -333,8 +327,8 @@ public class Server implements ServerPage, Runnable {
 		}
 		// configure
 		configuration = new Object[2];
-		configuration[0] = System.currentTimeMillis();
-		configuration[1] = wPort;
+		configuration[0] = new Long(System.currentTimeMillis());
+		configuration[1] = new Integer(wPort);
 		// initialize reciever
 		recv = new WebReciever(config.getData(), data, configuration);
 		NPC3.setName(config.getData().getName());
@@ -347,7 +341,7 @@ public class Server implements ServerPage, Runnable {
 		listener.setName("Connection Listener");
 		listener.setPriority(Thread.MIN_PRIORITY);
 		listener.start();
-		outputs = new ArrayList<ScoutConnection>(8);
+		outputs = new ArrayList(8);
 		//myTeam = data.getData().getMyTeam();
 		// register web server
 		daemon = new WebServer();
@@ -413,10 +407,10 @@ public class Server implements ServerPage, Runnable {
 		int i = 0;
 		long minDelta = Long.MAX_VALUE, delta;
 		long date = System.currentTimeMillis();
-		Iterator<Event> it = data.getData().getEvents().iterator();
+		Iterator it = data.getData().getEvents().iterator();
 		Event e, event = null;
 		while (it.hasNext()) {
-			e = it.next();
+			e = (Event)it.next();
 			// obvious!
 			if (e.duringRegional(date))
 				return e;
@@ -453,9 +447,9 @@ public class Server implements ServerPage, Runnable {
 		} catch (Exception e) { }
 		// close sockets
 		synchronized (outputs) {
-			Iterator<ScoutConnection> it = outputs.iterator();
+			Iterator it = outputs.iterator();
 			while (it.hasNext()) {
-				it.next().close();
+				((ScoutConnection)it.next()).close();
 				it.remove();
 			}
 		}
@@ -478,7 +472,7 @@ public class Server implements ServerPage, Runnable {
 			newDate = System.currentTimeMillis();
 			if (newDate / 1000 != oldDate / 1000) {
 				// load new data and correct
-				configuration[0] = newDate;
+				configuration[0] = new Long(newDate);
 				// compute up-time
 				oldDate = newDate;
 				delta = (newDate - startDate) / 1000;
@@ -495,12 +489,12 @@ public class Server implements ServerPage, Runnable {
 						System.gc();
 						// clean up clean up
 						synchronized (sid) {
-							Iterator<String> it = sid.keySet().iterator();
+							Iterator it = sid.keySet().iterator();
 							String s; Session sess;
 							// look for expired sessions
 							while (it.hasNext()) {
-								s = it.next();
-								sess = sid.get(s);
+								s = (String)it.next();
+								sess = (Session)sid.get(s);
 								if (sess.lastActivity + STIMEOUT < newDate) {
 									// destroy
 									AppLib.printDebug("Destroying session for " +
@@ -565,11 +559,11 @@ public class Server implements ServerPage, Runnable {
 	private void readInputs() {
 		boolean changed = false;
 		synchronized (outputs) {
-			Iterator<ScoutConnection> it = outputs.iterator();
+			Iterator it = outputs.iterator();
 			ScoutConnection input;
 			//recv.setConfiguration(configuration);
 			while (it.hasNext()) {
-				input = it.next();
+				input = (ScoutConnection)it.next();
 				if ((!input.isAuth() && System.currentTimeMillis() > input.getTime() + 5000L) ||
 						input.isDead()) {
 					// dead client, time to close
@@ -604,13 +598,13 @@ public class Server implements ServerPage, Runnable {
 		AppLib.printDebug("Save and send data...");
 		synchronized (outputs) {
 			// notify this listener
-			Iterator<ScoutConnection> it = outputs.iterator();
+			Iterator it = outputs.iterator();
 			ScoutConnection conn;
 			Socket sock;
 			while (it.hasNext()) {
-				conn = it.next();
+				conn = (ScoutConnection)it.next();
 				sock = conn.getSocket();
-				if (sock == null || sock.isClosed())
+				if (sock == null || conn.isDead())
 					// died
 					it.remove();
 				else if (conn.isAuth())
@@ -763,7 +757,7 @@ public class Server implements ServerPage, Runnable {
 		/**
 		 * The volumes that have already been synced or ignored (already seen)
 		 */
-		private List<File> seen;
+		private List seen;
 		/**
 		 * The copy buffer.
 		 */
@@ -779,7 +773,7 @@ public class Server implements ServerPage, Runnable {
 			setPriority(Thread.MIN_PRIORITY + 1);
 			VolumeLister.flushCache();
 			volumes = VolumeLister.listVolumes();
-			seen = new ArrayList<File>(10);
+			seen = new ArrayList(10);
 			buffer = new byte[16384];
 		}
 		public void run() {
@@ -819,14 +813,14 @@ public class Server implements ServerPage, Runnable {
 		 * @return a list of JPEG files
 		 */
 		private File[] listAll(File base) {
-			LinkedList<File> files = new LinkedList<File>();
+			LinkedList files = new LinkedList();
 			listAll0(base, files);
 			File[] ret = new File[files.size()];
 			// copy to array
-			Iterator<File> it = files.iterator();
+			Iterator it = files.iterator();
 			int i = 0;
 			while (it.hasNext())
-				ret[i++] = it.next();
+				ret[i++] = (File)it.next();
 			return ret;
 		}
 		/**
@@ -835,7 +829,7 @@ public class Server implements ServerPage, Runnable {
 		 * @param base the directory to search
 		 * @param files the list to which to append
 		 */
-		private void listAll0(File base, java.util.List<File> files) {
+		private void listAll0(File base, java.util.List files) {
 			File[] list = base.listFiles();
 			if (list == null) return;
 			File file;
@@ -854,8 +848,8 @@ public class Server implements ServerPage, Runnable {
 		 * @param in the list of files
 		 * @return a faster way to get at files by name
 		 */
-		private Map<String, File> buildMap(File[] in) {
-			Map<String, File> ret = new HashMap<String, File>();
+		private Map buildMap(File[] in) {
+			Map ret = new HashMap();
 			for (int i = 0; i < in.length; i++)
 				ret.put(in[i].getName().toLowerCase(), in[i]);
 			return ret;
@@ -894,10 +888,10 @@ public class Server implements ServerPage, Runnable {
 		private void checkFlash() {
 			AppLib.printDebug("Re-checking FLASH volumes");
 			File s449, dataFile, imageFile; int i; boolean kioskOpen;
-			Iterator<File> it2 = seen.iterator();
+			Iterator it2 = seen.iterator();
 			// clean off old drives
 			while (it2.hasNext()) {
-				dataFile = it2.next();
+				dataFile = (File)it2.next();
 				for (i = 0; i < volumes.length; i++)
 					if (volumes[i].equals(dataFile)) break;
 				if (i >= volumes.length) it2.remove();
@@ -916,7 +910,7 @@ public class Server implements ServerPage, Runnable {
 						"Scout449 FLASH drive detected.\nSynchronize?", "Scout449 FLASH",
 						JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null,
 						choices, "Cancel");
-					File[] images; Map<String, File> match; String name; File dest;
+					File[] images; Map match; String name; File dest;
 					switch (choice) {
 					case 0:
 						// to
@@ -940,7 +934,7 @@ public class Server implements ServerPage, Runnable {
 							// copy changed ones (we're assuming, given that the files are images,
 							//  that different images are very unlikely to have the same size)
 							name = images[j].getName().toLowerCase();
-							dest = match.get(name);
+							dest = (File)match.get(name);
 							if (dest == null) dest = new File(imageFile, name);
 							if (dest.length() != images[j].length())
 								copy(images[j], dest);
@@ -961,17 +955,17 @@ public class Server implements ServerPage, Runnable {
 							synchronized (outputs) {
 								// make this always work (I know it's not really feasible...)
 								data.setData(newData);
-								Iterator<Event> it = data.getData().getEvents().iterator();
+								Iterator it = data.getData().getEvents().iterator();
 								Event item;
 								while (it.hasNext()) {
-									item = it.next();
+									item = (Event)it.next();
 									if (item.equals(old)) {
 										data.setActive(item);
 										break;
 									}
 								}
 								if (data.getActive() == null && data.getData().getEvents().size() > 0)
-									data.setActive(data.getData().getEvents().get(0));
+									data.setActive((Event)data.getData().getEvents().get(0));
 							}
 							fireUpdate();
 						} catch (Exception e) {
@@ -988,7 +982,7 @@ public class Server implements ServerPage, Runnable {
 							// copy changed ones (we're assuming, given that the files are images,
 							//  that different images are very unlikely to have the same size)
 							name = images[j].getName().toLowerCase();
-							dest = match.get(name);
+							dest = (File)match.get(name);
 							if (dest == null) dest = new File(teams, name);
 							if (dest.length() != images[j].length()) {
 								copy(images[j], dest);
@@ -1036,7 +1030,7 @@ public class Server implements ServerPage, Runnable {
 				// create the directory
 				if (!thumbs.exists()) thumbs.mkdirs();
 			}
-			start();
+			this.start();
 		}
 		public void run() {
 			if (teams == null || !teams.isDirectory())
@@ -1125,10 +1119,10 @@ public class Server implements ServerPage, Runnable {
 			try {
 				// initialize variables
 				InputStream is = sock.getInputStream();
-				StringBuilder name; char in = '\n';
+				StringBuffer name; char in = '\n';
 				String datName; int ind;
 				try {
-					name = new StringBuilder(64);
+					name = new StringBuffer(64);
 					// read the name and parse it
 					while ((in = (char)is.read()) > 0 && in != Constants.BULK_EOL && in < 256)
 						name.append(in);
@@ -1225,7 +1219,7 @@ public class Server implements ServerPage, Runnable {
 	 * @param find the item to find (all instances not spanning lines will be found),
 	 * @param replace the replacement
 	 */
-	private void sendContent(String nUrl, PrintWriter out, Pattern find, String replace) {
+	private void sendContent(String nUrl, PrintWriter out, String find, String replace) {
 		try {
 			URL scoringURL = getClass().getResource("/" + nUrl);
 			URLConnection conn = scoringURL.openConnection();
@@ -1242,8 +1236,19 @@ public class Server implements ServerPage, Runnable {
 			else
 				out.print("text/html");
 			out.print("\r\n\r\n");
-			while (br.ready())
-				out.println(find.matcher(br.readLine()).replaceAll(replace));
+			String line;
+			while (br.ready()) {
+				line = br.readLine();
+				StringBuffer nLine = new StringBuffer(256);
+				for (int i = 0; i < line.length(); i++) {
+					if (line.startsWith(find, i)) {
+						nLine.append(replace);
+						i += find.length();
+					} else
+						nLine.append(line.charAt(i));
+				}
+				out.println(nLine);
+			}
 			br.close();
 			out.flush();
 		} catch (IOException e) {
@@ -1260,9 +1265,9 @@ public class Server implements ServerPage, Runnable {
 	private void sendLogin(String url, PrintWriter out, String ip, String extra) {
 		if (extra == null) {
 			// log out
-			Map<String, String> login = Worker.parseGET(url.substring(7));
+			Map login = Worker.parseGET(url.substring(7));
 			Session sess;
-			if (login.containsKey("sid") && (sess = sid.get(login.get("sid"))) != null) {
+			if (login.containsKey("sid") && (sess = (Session)sid.get(login.get("sid"))) != null) {
 				// destroy
 				AppLib.printDebug(sess.user + " logout");
 				synchronized (sid) {
@@ -1277,17 +1282,18 @@ public class Server implements ServerPage, Runnable {
 				sendInvalid(out, "Invalid SID.");
 			return;
 		}
-		String[] lines = extra.split("\\n\\n");
-		if (lines.length < 2) {
+		int index = extra.indexOf("\n\n");
+		if (index < 0) {
 			sendInvalid(out, "Invalid login.");
 			return;
 		}
 		// we have POST data
-		Map<String, String> login = Worker.parseGET(lines[1]);
-		if (login.containsKey("action") && login.get("action").equalsIgnoreCase("login")
+		Map login = Worker.parseGET(extra.substring(index + 2));
+		if (login.containsKey("action") && ((String)login.get("action")).equalsIgnoreCase("login")
 				&& login.containsKey("user") && login.containsKey("pass")) {
 			// login attempt
-			UserData u = new UserData(login.get("user"), login.get("pass").toCharArray());
+			UserData u = new UserData((String)login.get("user"),
+				((String)login.get("pass")).toCharArray());
 			u = config.getData().authUser(u);
 			if (u == null) {
 				// invalid username and password
@@ -1318,12 +1324,12 @@ public class Server implements ServerPage, Runnable {
 	 * @param out the output stream
 	 */
 	private void sendConfig(String url, PrintWriter out) {
-		Map<String, String> params = Worker.parseGET(url.substring(8));
-		String id = params.get("sid");
+		Map params = Worker.parseGET(url.substring(8));
+		String id = (String)params.get("sid");
 		Session sess;
-		if (id != null && (sess = sid.get(id)) != null) {
+		if (id != null && (sess = (Session)sid.get(id)) != null) {
 			AppLib.printDebug("Sending AJAX config");
-			StringBuilder output = new StringBuilder(2048);
+			StringBuffer output = new StringBuffer(2048);
 			output.append("var tpa = ");
 			output.append(ScheduleItem.TPA);
 			output.append(";\nvar sid = '");
@@ -1348,14 +1354,14 @@ public class Server implements ServerPage, Runnable {
 			// UDF field names
 			output.append(";\nvar udfs = new Array();\n");
 			i = 0;
-			List<UDF> udfs = data.getData().getUDFs();
+			List udfs = data.getData().getUDFs();
 			if (udfs != null) {
-				Iterator<UDF> it = udfs.iterator();
+				Iterator it = udfs.iterator();
 				while (it.hasNext()) {
 					output.append("udfs[");
 					output.append(i);
 					output.append("] = '");
-					output.append(escapeQuotes(it.next().getName()));
+					output.append(escapeQuotes(((UDF)it.next()).getName()));
 					output.append("';\n");
 					i++;
 				}
@@ -1363,14 +1369,14 @@ public class Server implements ServerPage, Runnable {
 			// Robot types
 			output.append("var types = new Array();\n");
 			i = 0;
-			List<String> types = data.getData().getTypes();
+			List types = data.getData().getTypes();
 			if (types != null) {
-				Iterator<String> it = types.iterator();
+				Iterator it = types.iterator();
 				while (it.hasNext()) {
 					output.append("types[");
 					output.append(i);
 					output.append("] = '");
-					output.append(escapeQuotes(it.next()));
+					output.append(escapeQuotes((String)it.next()));
 					output.append("';\n");
 					i++;
 				}
@@ -1378,13 +1384,13 @@ public class Server implements ServerPage, Runnable {
 			// Match labels
 			output.append("var labels = new Array();\n");
 			i = 0;
-			List<MatchLabel> labels = data.getData().getLabels();
-			Iterator<MatchLabel> it = labels.iterator();
+			List labels = data.getData().getLabels();
+			Iterator it = labels.iterator();
 			while (it.hasNext()) {
 				output.append("labels[");
 				output.append(i);
 				output.append("] = '");
-				output.append(escapeQuotes(it.next().getLabel()));
+				output.append(escapeQuotes(((MatchLabel)it.next()).getLabel()));
 				output.append("';\n");
 				i++;
 			}
@@ -1404,17 +1410,17 @@ public class Server implements ServerPage, Runnable {
 	 */
 	private void sendData(String url, PrintWriter out) {
 		// parse get string and validate
-		StringBuilder output = new StringBuilder(4096);
-		Map<String, String> params = Worker.parseGET(url.substring(5));
-		String tm = params.get("team");
-		String dat = params.get("data");
-		String ind = params.get("index");
-		String op = params.get("op");
-		String tme = params.get("time");
-		String id = params.get("sid");
+		StringBuffer output = new StringBuffer(4096);
+		Map params = Worker.parseGET(url.substring(5));
+		String tm = (String)params.get("team");
+		String dat = (String)params.get("data");
+		String ind = (String)params.get("index");
+		String op = (String)params.get("op");
+		String tme = (String)params.get("time");
+		String id = (String)params.get("sid");
 		int teamNum = -1, index = -1; Session sess;
 		Team team = null; long time = -1L;
-		if (op != null && id != null && (sess = sid.get(id)) != null && sess.user.canRead()) {
+		if (op != null && id != null && (sess = (Session)sid.get(id)) != null && sess.user.canRead()) {
 			// parse team, time, and index
 			try {
 				teamNum = Integer.parseInt(tm);
@@ -1432,9 +1438,9 @@ public class Server implements ServerPage, Runnable {
 					sendTeamInfo(output, team);
 				} else { // all teams
 					AppLib.printDebug("AJAX Sending data: all teams");
-					Iterator<Integer> it = data.getTeams().iterator();
+					Iterator it = data.getTeams().iterator();
 					while (it.hasNext())
-						sendTeamInfo(output, data.get(it.next()));
+						sendTeamInfo(output, data.get((Integer)it.next()));
 				}
 			} else if (op.equals("stime")) {
 				AppLib.printDebug("AJAX Synchronizing time and lateness");
@@ -1445,11 +1451,11 @@ public class Server implements ServerPage, Runnable {
 			} else if (op.equals("comments") && team != null) {
 				// get comments
 				AppLib.printDebug("AJAX Sending comments for: team " + teamNum);
-				Iterator<Comment> it = team.getComments().iterator();
-				Iterator<Integer> it2;
+				Iterator it = team.getComments().iterator();
+				Iterator it2;
 				Comment comment;
 				while (it.hasNext()) {
-					comment = it.next();
+					comment = (Comment)it.next();
 					output.append(comment.getOwner().getName());
 					output.append(',');
 					output.append(comment.getOwner().getRealName());
@@ -1468,11 +1474,11 @@ public class Server implements ServerPage, Runnable {
 					&& sess.user.canWrite()) {
 				// update comment
 				AppLib.printDebug("AJAX updating comment: team " + teamNum);
-				Iterator<Comment> it = team.getComments().iterator();
+				Iterator it = team.getComments().iterator();
 				Comment comment; boolean changed = false;
 				StringTokenizer str = new StringTokenizer(dat, ",");
 				while (it.hasNext()) {
-					comment = it.next();
+					comment = (Comment)it.next();
 					if (comment.getOwner().equals(sess.user)) {
 						// match - update
 						// todo: make this work for comments when there's a match tagged onto it
@@ -1481,9 +1487,9 @@ public class Server implements ServerPage, Runnable {
 							String text = Worker.urldecode(str.nextToken());
 							int sz = data.getData().getUDFs().size();
 							// update text and udfs
-							List<Integer> udfs = new ArrayList<Integer>(sz);
+							List udfs = new ArrayList(sz);
 							while (str.hasMoreTokens() && udfs.size() < sz)
-								udfs.add(Integer.parseInt(str.nextToken()));
+								udfs.add(Integer.valueOf(str.nextToken()));
 							if (udfs.size() == sz) {
 								// good to go
 								comment.setText(text);
@@ -1507,9 +1513,9 @@ public class Server implements ServerPage, Runnable {
 					String text = Worker.urldecode(str.nextToken()).trim();
 					int sz = data.getData().getUDFs().size();
 					// update text and udfs
-					List<Integer> udfs = new ArrayList<Integer>(sz);
+					List udfs = new ArrayList(sz);
 					while (str.hasMoreTokens() && udfs.size() < sz)
-						udfs.add(Integer.parseInt(str.nextToken()));
+						udfs.add(Integer.valueOf(str.nextToken()));
 					if (udfs.size() == sz) {
 						// good to go, add it on
 						data.updateComment(team.getNumber(), new Comment(sess.user, null,
@@ -1545,24 +1551,27 @@ public class Server implements ServerPage, Runnable {
 				int theTeam; // match entry
 				StringTokenizer str = new StringTokenizer(dat, ",");
 				try {
-					List<Integer> teams = new ArrayList<Integer>(ScheduleItem.TPA * 2);
+					List teams = new ArrayList(ScheduleItem.TPA * 2);
 					BitSet surrogate = new BitSet(ScheduleItem.TPA * 2);
 					for (int i = 0; i < ScheduleItem.TPA * 2; i++) {
 						// add teams
 						theTeam = Integer.parseInt(str.nextToken());
-						if (data.get(theTeam) == null) teams.add(0);
-						else teams.add(theTeam);
-						surrogate.set(i, Character.toLowerCase(str.nextToken().charAt(0)) == 't');
+						if (data.get(theTeam) == null) teams.add(new Integer(0));
+						else teams.add(new Integer(theTeam));
+						if (Character.toLowerCase(str.nextToken().charAt(0)) == 't')
+							surrogate.set(i);
+						else
+							surrogate.clear(i);
 					}
 					// init match-to-be
 					ScheduleItem match = new ScheduleItem(teams, time, true);
 					match.getSurrogate().or(surrogate);
 					match.setNum(index);
-					Iterator<MatchLabel> it = data.getData().getLabels().iterator();
+					Iterator it = data.getData().getLabels().iterator();
 					String toMatch = str.nextToken();
 					MatchLabel dest = MatchLabel.blank, item;
 					while (it.hasNext()) {
-						item = it.next();
+						item = (MatchLabel)it.next();
 						if (item.getLabel().equalsIgnoreCase(toMatch)) {
 							dest = item;
 							break;
@@ -1580,11 +1589,11 @@ public class Server implements ServerPage, Runnable {
 				// send all matches
 				synchronized (data.getSchedule()) {
 					AppLib.printDebug("AJAX Sending data: all matches");
-					ScheduleItem match; Iterator<Score> it3;
-					Iterator<ScheduleItem> it = data.getSchedule().values().iterator();
-					Iterator<Integer> it2;
+					ScheduleItem match; Iterator it3;
+					Iterator it = data.getSchedule().values().iterator();
+					Iterator it2;
 					while (it.hasNext()) {
-						match = it.next();
+						match = (ScheduleItem)it.next();
 						output.append(match.getTime());
 						output.append(',');
 						output.append(match.getNum());
@@ -1605,7 +1614,7 @@ public class Server implements ServerPage, Runnable {
 							it3 = match.getScores().iterator();
 							while (it3.hasNext()) {
 								output.append(',');
-								output.append(it3.next().totalScore());
+								output.append(((Score)it3.next()).totalScore());
 							}
 						} else
 							output.append(",null");
@@ -1625,7 +1634,7 @@ public class Server implements ServerPage, Runnable {
 	 * @param output the output buffer
 	 * @param team the team to send
 	 */
-	private void sendTeamInfo(StringBuilder output, Team team) {
+	private void sendTeamInfo(StringBuffer output, Team team) {
 		output.append(team.getNumber());
 		output.append(',');
 		output.append(team.getName());
@@ -1643,7 +1652,7 @@ public class Server implements ServerPage, Runnable {
 		output.append(team.getTies());
 		output.append(',');
 		output.append(team.getType());
-		Iterator<Integer> it = team.getData().iterator();
+		Iterator it = team.getData().iterator();
 		while (it.hasNext()) {
 			output.append(',');
 			output.append(it.next());
@@ -1663,7 +1672,9 @@ public class Server implements ServerPage, Runnable {
 		out.println(text);
 	}
 	public boolean match(String url) {
-		return toMatch.matcher(url).matches();
+		int index = url.indexOf('.');
+		int index2 = url.indexOf('?');
+		return index < 0 || (index2 >= 0 && index > index2);
 	}
 	public void action(String url, String inet, String inData, PrintWriter out,
 			OutputStream os) {
@@ -1792,7 +1803,7 @@ public class Server implements ServerPage, Runnable {
 				if (index > 0) {
 					// look at content type; feed the error message only for html
 					ext = ext.substring(index, ext.length());
-					ext = HTTPConstants.mimeTypes.get(ext);
+					ext = (String)HTTPConstants.mimeTypes.get(ext);
 					if (ext != null && ext.equals("text/html"))
 						sendInvalid(out, "The specified URL or module was not found.");
 					else {
@@ -1805,7 +1816,7 @@ public class Server implements ServerPage, Runnable {
 					sendInvalid(out, "The specified URL or module was not found.");
 			} else
 				// general HTTP exception
-				sendInvalid(out, code + " " + HTTPConstants.messages.get(code));
+				sendInvalid(out, code + " " + HTTPConstants.messages.get(new Integer(code)));
 		} catch (Exception e) {
 			sendInvalid(out, "The specified URL or module was not found.");
 		}
@@ -1843,14 +1854,7 @@ public class Server implements ServerPage, Runnable {
 		output.append("\n<li>Try contacting the Administrator of this server. ");
 		output.append("Ask for help on QuickChat, but do <i>not</i> ring the bell!</li>\n<li>");
 		output.append("Still stuck? Contact the scoutmaster or another operator.</li>\n");
-		if (e != null) {
-			output.append("</ul><br><br>Detailed Error Information:<br>\n<code>");
-			// can't use printStackTrace because of html escapes
-			StackTraceElement[] trace = e.getStackTrace();
-            for (int i = 0; i < trace.length; i++)
-                output.append("\tat " + htmlspecial(trace[i].toString()));
-			output.append("</code>\n");
-		} else output.append("</ul>\n");
+		output.append("</ul>\n");
 		httpOK(out);
 		out.print("<html><head><title>Error</title></head><body><b>");
 		// body text
@@ -1878,7 +1882,7 @@ public class Server implements ServerPage, Runnable {
 	 * @param match the match to report
 	 */
 	private void sendRealReport(PrintWriter out, ScheduleItem match) {
-		StringBuilder output = new StringBuilder(8192);
+		StringBuffer output = new StringBuffer(8192);
 		// compute title
 		String title = match.getLabel() + " #" + match.getNum() + " at " +
 			ScheduleItem.timeFormat(match.getTime()) +
@@ -1896,13 +1900,13 @@ public class Server implements ServerPage, Runnable {
 		output.append("\"><tr><th width=\"330\" bgcolor=\"#FF0000\">Red</th>");
 		output.append("<th width=\"330\" bgcolor=\"#00FFFF\">Blue</th></tr>\n");
 		// print each row
-		List<Integer> teams = match.getTeams();
+		List teams = match.getTeams();
 		for (int i = 0; i < ScheduleItem.TPA; i++) {
 			// the red team
 			output.append("<tr>");
-			sendMiniReport(output, teams.get(i));
+			sendMiniReport(output, ((Integer)teams.get(i)).intValue());
 			// the blue team
-			sendMiniReport(output, teams.get(i + ScheduleItem.TPA));
+			sendMiniReport(output, ((Integer)teams.get(i + ScheduleItem.TPA)).intValue());
 			output.append("</tr>");
 		}
 		// generated time and version
@@ -1928,10 +1932,10 @@ public class Server implements ServerPage, Runnable {
 	 * @param output the output buffer
 	 * @param tm the team number to send
 	 */
-	private void sendMiniReport(StringBuilder output, int tm) {
+	private void sendMiniReport(StringBuffer output, int tm) {
 		int j; Team team = data.get(tm);
-		List<Integer> myData; Set<Comment> coms;
-		Iterator<Integer> comDt;
+		List myData; Set coms;
+		Iterator comDt;
 		if (team == null) {
 			// this should never happen. make it graceful!
 			output.append("<td height=\"250\" valign=\"top\">Team Not Found</td>");
@@ -1986,13 +1990,13 @@ public class Server implements ServerPage, Runnable {
 		myData = team.getData();
 		// UDFs. Only the 1st 3 (at most) get printed!
 		coms = team.getComments();
-		List<UDF> udfs = data.getData().getUDFs();
+		List udfs = data.getData().getUDFs();
 		if (myData != null && udfs != null) {
 			comDt = myData.iterator();
-			Iterator<UDF> it = udfs.iterator();
+			Iterator it = udfs.iterator();
 			for (j = 0; comDt.hasNext() && j < Math.max(3, 7 - coms.size()) && it.hasNext(); j++) {
 				output.append("<b>");
-				output.append(htmlspecial(it.next().getName()));
+				output.append(htmlspecial(((UserData)it.next()).getName()));
 				output.append(":</b>&nbsp; ");
 				output.append(comDt.next());
 				output.append("<br>\n");
@@ -2000,9 +2004,9 @@ public class Server implements ServerPage, Runnable {
 		}
 		// comments. Only the 1st 4 (at most) get printed!
 		if (coms != null) {
-			Iterator<Comment> it = coms.iterator();
+			Iterator it = coms.iterator();
 			for (j = 0; it.hasNext() && j < 4; j++) {
-				output.append(htmlspecial(it.next().getText()));
+				output.append(htmlspecial(((Comment)it.next()).getText()));
 				output.append("<br>\n");
 			}
 		}
@@ -2015,30 +2019,30 @@ public class Server implements ServerPage, Runnable {
 	 * @param out the output stream
 	 */
 	private void sendReport(String url, PrintWriter out) {
-		Map<String, String> params = Worker.parseGET(url.substring(7));
+		Map params = Worker.parseGET(url.substring(7));
 		if (params.containsKey("time")) {
 			// validate match
 			long tm = 0L;
 			String event = null;
 			try {
-				tm = Long.parseLong(params.get("time"));
+				tm = Long.parseLong((String)params.get("time"));
 			} catch (Exception e) {
 				sendInvalid(out, "Match number or time is not valid.");
 				return;
 			}
 			if (params.containsKey("event")) {
-				event = params.get("event");
+				event = (String)params.get("event");
 				if (event == null || event.length() != 2) event = null;
 				else event = event.toUpperCase();
 			}
 			// select a regional
-			Map<SecondTime, ScheduleItem> sched;
+			Map sched;
 			if (event == null)
 				sched = data.getSchedule();
 			else
 				sched = data.getEvent(event).getSchedule();
 			synchronized (sched) {
-				ScheduleItem match = sched.get(new SecondTime(tm));
+				ScheduleItem match = (ScheduleItem)sched.get(new SecondTime(tm));
 				if (match == null)
 					sendInvalid(out, "No matches matched this query.");
 				else
@@ -2056,10 +2060,10 @@ public class Server implements ServerPage, Runnable {
 	 */
 	private void sendThumbnail(String url, PrintWriter out, OutputStream os) {
 		// parse get string and validate
-		Map<String, String> params = Worker.parseGET(url.substring(10));
+		Map params = Worker.parseGET(url.substring(10));
 		if (params.containsKey("team")) {
 			// validate team number and index
-			String tm = params.get("team");
+			String tm = (String)params.get("team");
 			if (!AppLib.positiveInteger(tm)) {
 				Worker.sendHTTP(out, HTTPConstants.HTTP_NOT_FOUND);
 				sendInitialHeaders(out);
@@ -2110,10 +2114,10 @@ public class Server implements ServerPage, Runnable {
 	 */
 	private void sendBigImage(String url, PrintWriter out, OutputStream os) {
 		// parse get string and validate
-		Map<String, String> params = Worker.parseGET(url.substring(6));
+		Map params = Worker.parseGET(url.substring(6));
 		if (params.containsKey("team")) {
 			// validate team number and index
-			String tm = params.get("team");
+			String tm = (String)params.get("team");
 			if (!AppLib.positiveInteger(tm)) {
 				Worker.sendHTTP(out, HTTPConstants.HTTP_NOT_FOUND);
 				sendInitialHeaders(out);

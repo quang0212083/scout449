@@ -65,19 +65,19 @@ public class Importer {
 	/**
 	 * The UDF names.
 	 */
-	private EditableList<UDF> udfNames;
+	private EditableList udfNames;
 	/**
 	 * The robot types.
 	 */
-	private EditableList<String> rTypes;
+	private EditableList rTypes;
 	/**
 	 * The labels.
 	 */
-	private EditableList<MatchLabel> mLabels;
+	private EditableList mLabels;
 	/**
 	 * The list of hotkeys.
 	 */
-	private EditableList<Hotkey> hotkeyList;
+	private EditableList hotkeyList;
 	/**
 	 * The combo box to select regionals.
 	 */
@@ -89,7 +89,7 @@ public class Importer {
 	/**
 	 * The list of regionals.
 	 */
-	private List<Regional> regionalList;
+	private List regionalList;
 	/**
 	 * The current regional.
 	 */
@@ -135,15 +135,15 @@ public class Importer {
 	public Importer(ScoutStatus stat) {
 		status = stat;
 		AppLib.printDebug("Initializing importer");
-		Map<String, String> input = stat.getMaster().getCommandLine();
+		Map input = stat.getMaster().getCommandLine();
 		scoutName = Server.defaultScoutName;
 		String configName = Server.defaultConfigName;
 		// check for scout data file change
-		String param = input.get("-f");
+		String param = (String)input.get("-f");
 		if (param != null && (param = param.trim()).length() > 0)
 			scoutName = param;
 		// check for config file change
-		param = input.get("-c");
+		param = (String)input.get("-c");
 		if (param != null && (param = param.trim()).length() > 0)
 			configName = param;
 		config = new UserFile(configName);
@@ -178,7 +178,7 @@ public class Importer {
 	 */
 	private void setupUI() {
 		LocalEventListener events = new LocalEventListener();
-		regionalList = new ArrayList<Regional>(3);
+		regionalList = new ArrayList(3);
 		// GUI window
 		AppLib.printDebug("Loading configuration GUI");
 		win = new JFrame("Configuration");
@@ -195,7 +195,8 @@ public class Importer {
 		JTabbedPane tabs = new JTabbedPane();
 		JPanel tab = new JPanel(new VerticalFlow(false));
 		// team data
-		JComponent vert = new Box(BoxLayout.Y_AXIS);
+		JComponent vert = new JPanel();
+		vert.setLayout(new BoxLayout(vert, BoxLayout.Y_AXIS));
 		vert.setBorder(BorderFactory.createTitledBorder("Team List"));
 		// the combo box, add, del
 		JPanel horiz = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
@@ -203,7 +204,6 @@ public class Importer {
 		rModel = new RegionalModel();
 		regionals = new JComboBox(rModel);
 		regionals.setActionCommand("region");
-		regionals.setPrototypeDisplayValue("RegionalRegionalRegionalRegional");
 		regionals.addActionListener(events);
 		regionals.setEditable(false);
 		// add it up
@@ -238,20 +238,19 @@ public class Importer {
 		vert.add(horiz);
 		tab.add(vert);
 		advScore = new JCheckBox("Advanced Scoring?");
-		advScore.setFocusable(false);
 		advScore.setActionCommand("as");
 		advScore.addActionListener(events);
 		advScore.setAlignmentX(JComponent.CENTER_ALIGNMENT);
 		tab.add(advScore);
 		// UDF names
 		horiz = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-		udfNames = new EditableList<UDF>(status);
+		udfNames = new EditableList(status);
 		udfNames.setBorder(BorderFactory.createTitledBorder("User-Defined Fields"));
 		udfNames.setActionCommand("udf");
 		udfNames.addActionListener(events);
 		horiz.add(udfNames);
 		// hotkeys
-		hotkeyList = new EditableList<Hotkey>(status);
+		hotkeyList = new EditableList(status);
 		hotkeyList.setBorder(BorderFactory.createTitledBorder("Hot Keys"));
 		hotkeyList.setActionCommand("hotkey");
 		hotkeyList.addActionListener(events);
@@ -259,7 +258,7 @@ public class Importer {
 		horiz.add(hotkeyList);
 		tab.add(horiz);
 		// robot types
-		rTypes = new EditableList<String>(status);
+		rTypes = new EditableList(status);
 		rTypes.setBorder(BorderFactory.createTitledBorder("Robot Types"));
 		rTypes.setActionCommand("rtype");
 		rTypes.addActionListener(events);
@@ -311,7 +310,7 @@ public class Importer {
 		horiz.add(sName);
 		tab.add(horiz);
 		// match labels
-		mLabels = new EditableList<MatchLabel>(status);
+		mLabels = new EditableList(status);
 		mLabels.setActionCommand("label");
 		mLabels.addActionListener(events);
 		mLabels.setBorder(BorderFactory.createTitledBorder("Match Labels"));
@@ -382,7 +381,7 @@ public class Importer {
 		try {
 			// attempt user reading
 			AppLib.printDebug("Opening config");
-			Iterator<UserData> it = config.getData().getUsers().values().iterator();
+			Iterator it = config.getData().getUsers().values().iterator();
 			uTable.clear();
 			while (it.hasNext())
 				uTable.addItem(it.next());
@@ -398,25 +397,25 @@ public class Importer {
 			if (config.length > 2) {
 				// old config
 				AppLib.printDebug("Using old config");
-				mSpace.setText(Integer.toString((Integer)config[1]));
-				int ind = (Integer)config[2] / 12 - 1;
+				mSpace.setText(config[1].toString());
+				int ind = ((Integer)config[2]).intValue() / 12 - 1;
 				if (ind == 0 || ind == 1) timeDisplay.setSelectedIndex(ind);
 				udfNames.setList(data.getUDFs());
-				hotkeyList.setList(new ArrayList<Hotkey>(data.getHotkeys().getList()));
+				hotkeyList.setList(new ArrayList(data.getHotkeys().getList()));
 				mLabels.setList(data.getLabels());
 				rTypes.setList(data.getTypes());
 			} else
 				// load config defaults
 				throw new UnsupportedOperationException("No config; loading defaults");
 			// load events
-			Iterator<Event> it2 = data.getEvents().iterator();
+			Iterator it2 = data.getEvents().iterator();
 			while (it2.hasNext()) {
-				Regional r = new Regional(it2.next());
+				Regional r = new Regional((Event)it2.next());
 				r.end -= 86400000L;
 				rModel.addItem(r);
 			}
 			if (regionalList.size() > 0) {
-				current = regionalList.get(0);
+				current = (Regional)regionalList.get(0);
 				rModel.setSelectedItem(current);
 				load();
 			}
@@ -466,9 +465,9 @@ public class Importer {
 			scouting.createNewFile();
 			// start schedule and data store
 			AppLib.printDebug("Initializing schedule");
-			TreeMap<Integer, Team> map;
-			TreeMap<SecondTime, ScheduleItem> sched;
-			DataStore data = new DataStore(new ArrayList<Event>(4));
+			TreeMap map;
+			TreeMap sched;
+			DataStore data = new DataStore(new ArrayList(4));
 			data.setAdvScore(advScore.isSelected());
 			String sd = myTeam.getText();
 			// verify the team number
@@ -489,16 +488,16 @@ public class Importer {
 			data.setHotkeys(hkl);
 			// compute udf weights and udfs
 			AppLib.printDebug("Writing UDFs");
-			List<UDF> udfs = udfNames.getList();
+			List udfs = udfNames.getList();
 			data.setUDFs(udfs);
 			// load robot types and match labels
 			AppLib.printDebug("Writing labels and types");
-			List<String> types = rTypes.getList();
+			List types = rTypes.getList();
 			if (!types.contains("other") && !types.contains("Other")) types.add("Other");
 			data.setTypes(types);
-			List<MatchLabel> lbls = mLabels.getList();
+			List lbls = mLabels.getList();
 			if (lbls.size() < 1) {
-				lbls = new ArrayList<MatchLabel>();
+				lbls = new ArrayList();
 				lbls.add(new MatchLabel("Qualifications", true));
 				lbls.add(new MatchLabel("Practice", false));
 				lbls.add(new MatchLabel("Quarterfinals", true));
@@ -512,13 +511,13 @@ public class Importer {
 			String teamName;
 			Team team;
 			Regional r;
-			Iterator<Regional> it = regionalList.iterator();
+			Iterator it = regionalList.iterator();
 			while (it.hasNext()) {
-				r = it.next();
+				r = (Regional)it.next();
 				// write the regional to a new event
 				AppLib.printDebug("Writing regional " + r);
-				map = new TreeMap<Integer, Team>();
-				sched = new TreeMap<SecondTime, ScheduleItem>();
+				map = new TreeMap();
+				sched = new TreeMap();
 				if (r.file != null) {
 					br = new BufferedReader(new FileReader(r.file));
 					while (br.ready()) {
@@ -528,17 +527,17 @@ public class Importer {
 						// create team and put away
 						teamName = teamData.nextToken().trim();
 						team = new Team(teamName, teamNum, udfs.size());
-						map.put(teamNum, team);
+						map.put(new Integer(teamNum), team);
 					}
 					br.close();
 				} else if (r.based != null) {
 					// from the earlier event, but cleared off of all stats, etc.
-					Map<Integer, Team> tms = r.based.getTeams();
-					Iterator<Integer> it2 = tms.keySet().iterator();
-					int nTeam;
+					Map tms = r.based.getTeams();
+					Iterator it2 = tms.keySet().iterator();
 					while (it2.hasNext()) {
-						nTeam = it2.next();
-						map.put(nTeam, new Team(tms.get(nTeam).getName(), nTeam, udfs.size()));
+						teamNum = ((Integer)it2.next()).intValue();
+						map.put(new Integer(teamNum), new Team(((Team)tms.get(new Integer(teamNum)))
+							.getName(), teamNum, udfs.size()));
 					}
 				} else throw new UnsupportedOperationException("no file or base");
 				data.getEvents().add(new Event(sched, map, r.code, r.name, r.start,
@@ -547,12 +546,12 @@ public class Importer {
 			AppLib.printDebug("Final configuration");
 			long t = System.currentTimeMillis();
 			// Time configured, match spacing, time in 24hr or 12hr, array of labels.
-			data.setExtraData(new Object[] { t, Integer.valueOf(sd),
-				timeDisplay.getSelectedIndex() * 12 + 12 });
+			data.setExtraData(new Object[] { new Long(t), Integer.valueOf(sd),
+				new Integer(timeDisplay.getSelectedIndex() * 12 + 12) });
 			// output writer
 			AppLib.printDebug("Writing to data");
 			ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(scoutName));
-			oos.writeUnshared(data);
+			oos.writeObject(data);
 			oos.close();
 			// all done!
 			AppLib.printWarn(win, "Import successful.");
@@ -575,10 +574,10 @@ public class Importer {
 		AppLib.printDebug("Writing to user config");
 		UserStore us = config.getData();
 		us.getUsers().clear();
-		Iterator<UserData> it2 = uTable.getList().iterator();
+		Iterator it2 = uTable.getList().iterator();
 		UserData u;
 		while (it2.hasNext()) {
-			u = it2.next();
+			u = (UserData)it2.next();
 			us.setUserData(u.getName(), u);
 		}
 		us.setName(myName);
@@ -726,9 +725,9 @@ public class Importer {
 					JOptionPane.QUESTION_MESSAGE);
 				if (in != null && in.length() > 0) name = in;
 				else return;
-				Iterator<UserData> it = uTable.getList().iterator();
+				Iterator it = uTable.getList().iterator();
 				while (it.hasNext())
-					if (it.next().getName().equalsIgnoreCase(in)) {
+					if (((UserData)it.next()).getName().equalsIgnoreCase(in)) {
 						AppLib.printWarn(win, "This user already exists.");
 						return;
 					}
@@ -784,7 +783,7 @@ public class Importer {
 			} else if (cmd.equals("region")) {
 				// set regional
 				if (regionals.getSelectedIndex() < 0 || !save()) return;
-				current = regionalList.get(regionals.getSelectedIndex());
+				current = (Regional)regionalList.get(regionals.getSelectedIndex());
 				load();
 			} else if (cmd.equals("add")) {
 				if (!save()) return;
@@ -816,7 +815,7 @@ public class Importer {
 				regionals.setActionCommand("notyet");
 				rModel.removeItem(index);
 				if (regionalList.size() > 0) {
-					current = regionalList.get(0);
+					current = (Regional)regionalList.get(0);
 					regionals.setSelectedIndex(0);
 					load();
 				} else {
@@ -922,7 +921,7 @@ public class Importer {
 	/**
 	 * A class that slightly modifies EditableList to represent users.
 	 */
-	private class UserList extends EditableList<UserData> {
+	private class UserList extends EditableList {
 		private static final long serialVersionUID = 0L;
 
 		/**

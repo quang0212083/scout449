@@ -62,8 +62,8 @@ public class FileBackend extends Backend {
 		try {
 			ObjectInputStream ois = new ObjectInputStream(new FileInputStream(datFile));
 			data = (DataStore)ois.readObject();
-			if (data.getEvents() == null) data.setEvents(new ArrayList<Event>(5));
-			if (data.getUDFs() == null) data.setUDFs(new ArrayList<UDF>(1));
+			if (data.getEvents() == null) data.setEvents(new ArrayList(5));
+			if (data.getUDFs() == null) data.setUDFs(new ArrayList(1));
 			ois.close();
 		} catch (Exception e) {
 			data = null;
@@ -99,7 +99,7 @@ public class FileBackend extends Backend {
 		super.delMatch(match);
 		update();
 	}
-	public void delMatches(Collection<ScheduleItem> matches) {
+	public void delMatches(Collection matches) {
 		super.delMatches(matches);
 		update();
 	}
@@ -123,7 +123,7 @@ public class FileBackend extends Backend {
 		super.updateComment(team, comment);
 		update();
 	}
-	public void addMatches(Collection<ScheduleItem> match) {
+	public void addMatches(Collection match) {
 		super.addMatches(match);
 		update();
 	}

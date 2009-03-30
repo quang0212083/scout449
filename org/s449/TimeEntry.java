@@ -1,13 +1,9 @@
 package org.s449;
-import java.awt.FlowLayout;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyListener;
-import java.util.Calendar;
-import java.util.StringTokenizer;
 
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
+import java.awt.FlowLayout;
+import java.awt.event.*;
+import java.util.*;
+import javax.swing.*;
 
 /**
  * A class representing a time entry dialog.
@@ -69,7 +65,7 @@ public class TimeEntry extends JPanel {
 	 * @param tm the time to set
 	 */
 	public void setTime(long tm) {
-		global.setTimeInMillis(tm);
+		global.setTime(new Date(tm));
 		// MAYBE: should this be replaced with timeFormat?
 		String output; int hr;
 		if (ampm != null) {
@@ -95,7 +91,7 @@ public class TimeEntry extends JPanel {
 	 * @return the time entered
 	 */
 	public long getTime(long seedTime) {
-		global.setTimeInMillis(seedTime);
+		global.setTime(new Date(seedTime));
 		StringTokenizer str = new StringTokenizer(time.getText(), ":");
 		try {
 			// parse hours and minutes
@@ -126,7 +122,7 @@ public class TimeEntry extends JPanel {
 				"It must be in the format hh:mm.");
 			return -1L;
 		}
-		return global.getTimeInMillis();
+		return global.getTime().getTime();
 	}
 	/**
 	 * Adds an action listener to the text field.

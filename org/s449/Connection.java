@@ -63,7 +63,7 @@ public class Connection {
 	/**
 	 * The object(s) that were just read.
 	 */
-	private LinkedList<Object> obj;
+	private LinkedList obj;
 
 	/**
 	 * Creates a new connection to the given host and port.
@@ -84,7 +84,7 @@ public class Connection {
 	private void setup(Socket socket) {
 		sock = socket;
 		ip = sock.getInetAddress().getHostAddress();
-		obj = new LinkedList<Object>();
+		obj = new LinkedList();
 		try {
 			out = new ObjectOutputStream(sock.getOutputStream());
 			out.flush();

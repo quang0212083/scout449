@@ -69,6 +69,16 @@ public abstract class Backend {
 		return data.getActive().get(team);
 	}
 	/**
+	 * Gets the Team object for a given team number.
+	 * 
+	 * @param team the team number
+	 * @return the team for that team number, or null if there is not
+	 *  a team by that number in the active event
+	 */
+	public Team get(Integer team) {
+		return data.getActive().get(team);
+	}
+	/**
 	 * Gets the number of teams in the current event's list.
 	 * 
 	 * @return the number of teams in the list
@@ -81,7 +91,7 @@ public abstract class Backend {
 	 * 
 	 * @return a Set of the team numbers in this list
 	 */
-	public Set<Integer> getTeams() {
+	public Set getTeams() {
 		return data.getActive().teamSet();
 	}
 	/**
@@ -90,7 +100,6 @@ public abstract class Backend {
 	 * @return the version
 	 * @deprecated Use Constants.VERSION instead.
 	 */
-	@Deprecated
 	public String getVersion() {
 		return Constants.VERSION;
 	}
@@ -99,7 +108,7 @@ public abstract class Backend {
 	 * 
 	 * @return the schedule
 	 */
-	public Map<SecondTime, ScheduleItem> getSchedule() {
+	public Map getSchedule() {
 		return data.getActive().getSchedule();
 	}
 	/**
@@ -148,7 +157,7 @@ public abstract class Backend {
 	 * @param toAdd the team to add
 	 */
 	public void addTeam(Team toAdd) {
-		data.getActive().getTeams().put(toAdd.getNumber(), toAdd);
+		data.getActive().getTeams().put(new Integer(toAdd.getNumber()), toAdd);
 	}
 	/**
 	 * Removes the specified team. This WILL cause issues with some parts
@@ -157,7 +166,7 @@ public abstract class Backend {
 	 * @param toRemove
 	 */
 	public void removeTeam(int toRemove) {
-		data.getActive().getTeams().remove(toRemove);
+		data.getActive().getTeams().remove(new Integer(toRemove));
 	}
 	/**
 	 * Adds the match to the queue.
@@ -174,20 +183,20 @@ public abstract class Backend {
 	 * 
 	 * @param match the match list to add
 	 */
-	public void addMatches(Collection<ScheduleItem> match) {
+	public void addMatches(Collection match) {
 		synchronized (getSchedule()) {
-			Iterator<ScheduleItem> it = match.iterator();
+			Iterator it = match.iterator();
 			while (it.hasNext())
-				addMatch0(it.next());
+				addMatch0((ScheduleItem)it.next());
 		}
 	}
 	private void addMatch0(ScheduleItem match) {
 		SecondTime tm = new SecondTime(match.getTime());
 		getSchedule().put(tm, match);
-		Iterator<Integer> it = match.getTeams().iterator();
+		Iterator it = match.getTeams().iterator();
 		Team team;
 		while (it.hasNext()) {
-			team = get(it.next());
+			team = get((Integer)it.next());
 			team.getMatches().put(tm, match);
 			team.validate();
 		}
@@ -208,20 +217,20 @@ public abstract class Backend {
 	 * 
 	 * @param matches the matches to remove
 	 */
-	public void delMatches(Collection<ScheduleItem> match) {
+	public void delMatches(Collection match) {
 		synchronized (getSchedule()) {
-			Iterator<ScheduleItem> it = match.iterator();
+			Iterator it = match.iterator();
 			while (it.hasNext())
-				delMatch0(it.next());
+				delMatch0((ScheduleItem)it.next());
 		}
 	}
 	private void delMatch0(ScheduleItem match) {
 		SecondTime tm = new SecondTime(match.getTime());
 		getSchedule().remove(tm);
-		Iterator<Integer> it = match.getTeams().iterator();
+		Iterator it = match.getTeams().iterator();
 		Team team;
 		while (it.hasNext()) {
-			team = get(it.next());
+			team = get((Integer)it.next());
 			team.getMatches().remove(tm);
 			team.validate();
 		}
@@ -235,7 +244,7 @@ public abstract class Backend {
 	 */
 	public void editMatch(long oldTime, ScheduleItem match) {
 		synchronized (getSchedule()) {
-			ScheduleItem old = getSchedule().get(new SecondTime(oldTime));
+			ScheduleItem old = (ScheduleItem)getSchedule().get(new SecondTime(oldTime));
 			if (old != null) delMatch0(old);
 			addMatch0(match);
 		}
@@ -256,8 +265,8 @@ public abstract class Backend {
 	public void scoreMatch(ScheduleItem match) {
 		// init vars
 		SecondTime tm = new SecondTime(match.getTime());
-		Map<SecondTime, ScheduleItem> schedule = getSchedule();
-		Iterator<Integer> it = match.getTeams().iterator();
+		Map schedule = getSchedule();
+		Iterator it = match.getTeams().iterator();
 		Team team;
 		match.setStatus(ScheduleItem.COMPLETE);
 		// update schedule
@@ -266,7 +275,7 @@ public abstract class Backend {
 		}
 		// update team scores
 		while (it.hasNext()) {
-			team = get(it.next());
+			team = get((Integer)it.next());
 			if (team != null) {
 				team.getMatches().put(tm, match);
 				team.validate();
@@ -318,9 +327,9 @@ public abstract class Backend {
 		if (data.getUDFs() == null)
 			throw new RuntimeException("no UDFs");
 		Event evt;
-		Iterator<Event> it = data.getEvents().iterator();
+		Iterator it = data.getEvents().iterator();
 		while (it.hasNext()) {
-			evt = it.next();
+			evt = (Event)it.next();
 			if (evt.getCode() == null || evt.getName() == null)
 				throw new RuntimeException("event has no code or name");
 			if (evt.getStartDate() / 1000L >= evt.getEndDate() / 1000L)

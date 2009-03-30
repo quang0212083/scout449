@@ -48,7 +48,6 @@ public class FileSelector extends Box implements ActionListener {
 		chooser.setMultiSelectionEnabled(false);
 		setDirectorySelect(dir);
 		select = new JButton("Browse...");
-		select.setFocusable(false);
 		select.setActionCommand("browse");
 		select.addActionListener(this);
 		title = new JLabel(tit);

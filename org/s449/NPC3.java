@@ -29,7 +29,7 @@ public class NPC3 implements Runnable {
 	/**
 	 * The server list (filled by detect())
 	 */
-	private static List<NPCServer> servers;
+	private static List servers;
 	/**
 	 * The ID of the source application.
 	 * 0 is not allowed. 1 is taken by the "test" application.
@@ -174,7 +174,7 @@ public class NPC3 implements Runnable {
 		initAddress();
 		MulticastSocket sock = null;
 		long start = System.currentTimeMillis();
-		servers = new ArrayList<NPCServer>(8);
+		servers = new ArrayList(8);
 		try {
 			final byte[] buffer = new byte[72];
 			final byte[] local = InetAddress.getLocalHost().getAddress();
@@ -218,7 +218,7 @@ public class NPC3 implements Runnable {
 	 * 
 	 * @return the list of servers
 	 */
-	public static List<NPCServer> getServers() {
+	public static List getServers() {
 		return Collections.unmodifiableList(servers);
 	}
 	/**
@@ -296,7 +296,6 @@ public class NPC3 implements Runnable {
 			DatagramPacket toSend;
 			final byte[] local = InetAddress.getLocalHost().getAddress();
 			sock = new MulticastSocket(port);
-			sock.setBroadcast(true);
 			sock.setTimeToLive(ttl);
 			sock.joinGroup(broad);
 			int op;

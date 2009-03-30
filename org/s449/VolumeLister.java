@@ -1,7 +1,6 @@
 package org.s449;
 
 import java.util.*;
-import java.util.regex.*;
 import java.io.*;
 
 /**
@@ -20,19 +19,6 @@ public class VolumeLister {
 	 */
 	private static final File nixDir = new File("/media/");
 	/**
-	 * Windows disk excludes.
-	 */
-	private static final Pattern winExclude = Pattern.compile("(A|B|C)\\:.*");
-	/**
-	 * Mac disk excludes.
-	 */
-	private static final Pattern macExclude = Pattern.compile("\\/Volumes\\/.*HD.*");
-	/**
-	 * *Nix disk excludes.
-	 */
-	private static final Pattern nixExclude =
-		Pattern.compile("\\/media\\/(r[oo]t|swap|t[e]?mp|(var)?run|(var)?lock|var).*");
-	/**
 	 * Volume list.
 	 */
 	private static File[] volumes;
@@ -45,6 +31,16 @@ public class VolumeLister {
 	 */
 	private static String os;
 
+	private static boolean exclude(int system, String path) {
+		if (system == 0) // win
+			return path.startsWith("A:") || path.startsWith("B:") || path.startsWith("C:");
+		if (system == 1) // mac
+			return path.indexOf("HD") > 0;
+		if (system == 2) // nix
+			return path.indexOf("swap") < 0 && path.indexOf("var") < 0 && path.indexOf("temp") < 0
+				&& path.indexOf("tmp") < 0 && path.indexOf("root") < 0 && path.indexOf("rt") < 0;
+		return false;
+	}
 	/**
 	 * Gets a list of volumes (for images and FLASH).
 	 * 
@@ -58,11 +54,11 @@ public class VolumeLister {
 				os = System.getProperty("os.name").toLowerCase();
 			if (os.indexOf("win") < 0) {
 				if (os.indexOf("mac") >= 0)
-					volumes = exclude(macDir.listFiles(), macExclude);
+					volumes = exclude(macDir.listFiles(), 1);
 				else
-					volumes = exclude(nixDir.listFiles(), nixExclude);
+					volumes = exclude(nixDir.listFiles(), 2);
 			} else
-				volumes = exclude(files, winExclude);
+				volumes = exclude(files, 0);
 			lastUpdate = System.currentTimeMillis();
 		}
 		return volumes;
@@ -95,16 +91,16 @@ public class VolumeLister {
 			AppLib.debugException(e);
 		}
 	}
-	private static File[] exclude(File[] files, Pattern bad) {
-		ArrayList<File> list = new ArrayList<File>(files.length);
+	private static File[] exclude(File[] files, int bad) {
+		ArrayList list = new ArrayList(files.length);
 		String path;
 		for (int i = 0; i < files.length; i++) {
 			path = files[i].getAbsolutePath();
-			if (!bad.matcher(path).matches()) list.add(files[i]);
+			if (!exclude(bad, path)) list.add(files[i]);
 		}
 		File[] answer = new File[list.size()];
 		for (int i = 0; i < list.size(); i++)
-			answer[i] = list.get(i);
+			answer[i] = (File)list.get(i);
 		return answer;
 	}
 	/**

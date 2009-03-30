@@ -15,15 +15,15 @@ public class DataStore implements java.io.Serializable {
 	/**
 	 * The events in this data file.
 	 */
-	private List<Event> events;
+	private List events;
 	/**
 	 * The User-Defined Field names.
 	 */
-	private List<UDF> udfs;
+	private List udfs;
 	/**
 	 * The match labels.
 	 */
-	private List<MatchLabel> labels;
+	private List labels;
 	/**
 	 * The hotkeys to be used in score keeping.
 	 */
@@ -31,7 +31,7 @@ public class DataStore implements java.io.Serializable {
 	/**
 	 * The list of robot types.
 	 */
-	private List<String> types;
+	private List types;
 	/**
 	 * The default team!
 	 */
@@ -64,7 +64,7 @@ public class DataStore implements java.io.Serializable {
 	 * 
 	 * @param events the list of events
 	 */
-	public DataStore(List<Event> events) {
+	public DataStore(List events) {
 		this.events = events;
 		hotkeys = null;
 		udfs = null;
@@ -75,7 +75,7 @@ public class DataStore implements java.io.Serializable {
 	 * 
 	 * @return the list of UDF titles
 	 */
-	public List<UDF> getUDFs() {
+	public List getUDFs() {
 		return udfs;
 	}
 	/**
@@ -83,7 +83,7 @@ public class DataStore implements java.io.Serializable {
 	 * 
 	 * @param udfs the new list of UDF titles
 	 */
-	public void setUDFs(List<UDF> udfs) {
+	public void setUDFs(List udfs) {
 		this.udfs = udfs;
 	}
 	/**
@@ -91,7 +91,7 @@ public class DataStore implements java.io.Serializable {
 	 * 
 	 * @return the list of events
 	 */
-	public List<Event> getEvents() {
+	public List getEvents() {
 		return events;
 	}
 	/**
@@ -101,10 +101,10 @@ public class DataStore implements java.io.Serializable {
 	 * @return the event
 	 */
 	public Event getEvent(String code) {
-		Iterator<Event> it = events.iterator();
+		Iterator it = events.iterator();
 		Event item;
 		while (it.hasNext()) {
-			item = it.next();
+			item = (Event)it.next();
 			if (item.getCode().equalsIgnoreCase(code))
 				return item;
 		}
@@ -115,7 +115,7 @@ public class DataStore implements java.io.Serializable {
 	 * 
 	 * @param events the new list of events
 	 */
-	public void setEvents(List<Event> events) {
+	public void setEvents(List events) {
 		this.events = events;
 	}
 	/**
@@ -139,7 +139,7 @@ public class DataStore implements java.io.Serializable {
 	 * 
 	 * @return the list of robot types
 	 */
-	public List<String> getTypes() {
+	public List getTypes() {
 		return types;
 	}
 	/**
@@ -147,7 +147,7 @@ public class DataStore implements java.io.Serializable {
 	 * 
 	 * @param types the new list of robot types
 	 */
-	public void setTypes(List<String> types) {
+	public void setTypes(List types) {
 		this.types = types;
 	}
 	/**
@@ -187,7 +187,7 @@ public class DataStore implements java.io.Serializable {
 	 *
 	 * @return the match labels
 	 */
-	public List<MatchLabel> getLabels() {
+	public List getLabels() {
 		return labels;
 	}
 	/**
@@ -195,7 +195,7 @@ public class DataStore implements java.io.Serializable {
 	 *
 	 * @param labels the new match labels
 	 */
-	public void setLabels(List<MatchLabel> labels) {
+	public void setLabels(List labels) {
 		this.labels = labels;
 	}
 	/**
@@ -244,12 +244,12 @@ public class DataStore implements java.io.Serializable {
 	 */
 	public void firstRank() {
 		if (active != null) {
-			ArrayList<Team> list = new ArrayList<Team>(active.getTeams().values());
+			ArrayList list = new ArrayList(active.getTeams().values());
 			Collections.sort(list, FIRSTComparator.instance);
 			int i = 1;
-			Iterator<Team> it = list.iterator();
+			Iterator it = list.iterator();
 			while (it.hasNext()) {
-				it.next().setFIRSTRank(i);
+				((Team)it.next()).setFIRSTRank(i);
 				i++;
 			}
 		}

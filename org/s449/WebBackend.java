@@ -118,7 +118,7 @@ public class WebBackend extends Backend {
 		send(RequestObject.matchAdd(match));
 		super.addMatch(match);
 	}
-	public synchronized void addMatches(Collection<ScheduleItem> match) {
+	public synchronized void addMatches(Collection match) {
 		send(RequestObject.matchAdd(match));
 		super.addMatches(match);
 	}
@@ -126,7 +126,7 @@ public class WebBackend extends Backend {
 		send(RequestObject.matchDel(match));
 		super.delMatch(match);
 	}
-	public synchronized void delMatches(Collection<ScheduleItem> match) {
+	public synchronized void delMatches(Collection match) {
 		send(RequestObject.matchDel(match));
 		super.delMatches(match);
 	}

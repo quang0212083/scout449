@@ -4,15 +4,15 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.text.*;
 
-public class AutoTextField<E> extends JTextField {
+public class AutoTextField extends JTextField {
 	private static final long serialVersionUID = 0L;
 
-	protected List<E> dataList;
+	protected List dataList;
 	protected boolean isCaseSensitive;
 	protected boolean isStrict;
-	protected AutoComboBox<E> autoComboBox;
+	protected AutoComboBox autoComboBox;
 
-	public AutoTextField(List<E> list) {
+	public AutoTextField(List list) {
 		isCaseSensitive = false;
 		isStrict = false;
 		autoComboBox = null;
@@ -24,7 +24,7 @@ public class AutoTextField<E> extends JTextField {
 			return;
 		}
 	}
-	protected AutoTextField(List<E> list, AutoComboBox<E> b) {
+	protected AutoTextField(List list, AutoComboBox b) {
 		isCaseSensitive = false;
 		isStrict = false;
 		autoComboBox = null;
@@ -76,10 +76,10 @@ public class AutoTextField<E> extends JTextField {
 	public void setStrict(boolean flag) {
 		isStrict = flag;
 	}
-	public List<E> getDataList() {
+	public List getDataList() {
 		return dataList;
 	}
-	public void setDataList(List<E> list) {
+	public void setDataList(List list) {
 		if (list == null) {
 			throw new IllegalArgumentException("values can not be null");
 		} else {

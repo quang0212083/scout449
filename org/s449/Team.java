@@ -8,7 +8,7 @@ import java.util.*;
  * @author Stephen Carlson
  * @version 4.0.0
  */
-public class Team implements Comparable<Team>, java.io.Serializable {
+public class Team implements Comparable, java.io.Serializable {
 	private static final long serialVersionUID = 5321978342178349871L;
 
 	/**
@@ -32,7 +32,7 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 	/**
 	 * The comments for this team.
 	 */
-	private Set<Comment> comments;
+	private Set comments;
 	/**
 	 * The robot type of this team.
 	 */
@@ -40,11 +40,11 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 	/**
 	 * The User-Defined Field values for this team.
 	 */
-	private transient List<Integer> data;
+	private transient List data;
 	/**
 	 * The total scores for this team.
 	 */
-	private transient List<Integer> scores;
+	private transient List scores;
 	/**
 	 * The FIRST rank of this team.
 	 */
@@ -88,7 +88,7 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 	/**
 	 * The matches for this team.
 	 */
-	private Map<SecondTime, ScheduleItem> matches;
+	private Map matches;
 	/**
 	 * The size of the UDFs array.
 	 */
@@ -105,8 +105,8 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 		name = newName;
 		number = newNum;
 		statsValid = false;
-		matches = new TreeMap<SecondTime, ScheduleItem>();
-		comments = new TreeSet<Comment>();
+		matches = new TreeMap();
+		comments = new TreeSet();
 		data = null;
 		scores = null;
 		numUDFs = alloc;
@@ -116,7 +116,7 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 	 * 
 	 * @return the list of comments on this team
 	 */
-	public Set<Comment> getComments() {
+	public Set getComments() {
 		return comments;
 	}
 	/**
@@ -132,7 +132,7 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 	 * 
 	 * @return the map of matches for this team
 	 */
-	public Map<SecondTime, ScheduleItem> getMatches() {
+	public Map getMatches() {
 		return matches;
 	}
 	/**
@@ -140,7 +140,7 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 	 * 
 	 * @param matches the new map of matches
 	 */
-	public void setMatches(Map<SecondTime, ScheduleItem> matches) {
+	public void setMatches(Map matches) {
 		this.matches = matches;
 		validate();
 	}
@@ -178,8 +178,9 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 		return getNumber() + " " + getName();
 	}
 	// Compares first by number and then by name.
-	public int compareTo(Team other) {
-		if (other == null) return -1;
+	public int compareTo(Object o) {
+		if (!(o instanceof Team)) return -1;
+		Team other = (Team)o;
 		if (other.getNumber() != getNumber()) return getNumber() - other.getNumber();
 		return getName().compareTo(other.getName());
 	}
@@ -355,7 +356,7 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 	 * 
 	 * @return the UDF data (this can include detailed ratings!)
 	 */
-	public List<Integer> getData() {
+	public List getData() {
 		v();
 		return data;
 	}
@@ -364,7 +365,7 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 	 * 
 	 * @return the scores
 	 */
-	public List<Integer> getScores() {
+	public List getScores() {
 		v();
 		return scores;
 	}
@@ -376,11 +377,11 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 	 */
 	public synchronized void validate() {
 		statsValid = false;
-		Iterator<Comment> it = comments.iterator();
+		Iterator it = comments.iterator();
 		Comment item;
 		// clean up the comments list - remove dead matches
 		while (it.hasNext()) {
-			item = it.next();
+			item = (Comment)it.next();
 			if (item.getMatch() != null && !matches.containsKey(new SecondTime(
 					item.getMatch().getTime()))) {
 				AppLib.printDebug("Stripping comment from " + getNumber());
@@ -389,19 +390,19 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 		}
 		// init
 		it = comments.iterator();
-		if (data == null) data = new ArrayList<Integer>(numUDFs);
+		if (data == null) data = new ArrayList(numUDFs);
 		int total = 0, num = 0, udf = 0;
 		int[] totalUDFs = new int[numUDFs];
 		int[] countUDFs = new int[numUDFs];
 		while (it.hasNext()) {
-			item = it.next();
+			item = (Comment)it.next();
 			// run up rating and UDFs
 			if (item.getRating() > 0.) {
 				num++;
 				total += item.getRating();
 			}
 			for (int i = 0; i < item.getUDFs().size(); i++) {
-				udf = item.getUDFs().get(i);
+				udf = ((Integer)item.getUDFs().get(i)).intValue();
 				if (udf != 0) {
 					totalUDFs[i] += udf;
 					countUDFs[i]++;
@@ -412,21 +413,21 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 		data.clear();
 		for (int i = 0; i < countUDFs.length; i++) {
 			if (countUDFs[i] == 0)
-				data.add(0);
+				data.add(new Integer(0));
 			else
-				data.add((int)Math.round((double)totalUDFs[i] / countUDFs[i]));
+				data.add(new Integer((int)Math.round((double)totalUDFs[i] / countUDFs[i])));
 		}
 		if (num == 0) cachedRating = 0;
 		else cachedRating = round1((double)total / num);
-		scores = new ArrayList<Integer>();
+		scores = new ArrayList();
 		// match stats
-		Iterator<ScheduleItem> sit = matches.values().iterator();
-		ScheduleItem match; List<Score> sc; Score myScore;
+		Iterator sit = matches.values().iterator();
+		ScheduleItem match; List sc; Score myScore;
 		int index, diff; boolean side;
 		points = teamPoints = enPoints = wins = ties = losses = rp = 0;
 		while (sit.hasNext()) {
-			match = sit.next();
-			index = match.getTeams().indexOf(getNumber());
+			match = (ScheduleItem)sit.next();
+			index = match.getTeams().indexOf(new Integer(getNumber()));
 			// sp, rp, record
 			if (index >= 0 && match.getStatus() == ScheduleItem.COMPLETE
 					&& match.counts() && !match.getSurrogate().get(index)) {
@@ -438,16 +439,17 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 				sc = match.getScores();
 				myScore = null;
 				if (sc != null) {
-					myScore = sc.get(index);
+					myScore = (Score)sc.get(index);
 					points += myScore.totalScore();
 					// accumulate
 					if (scores.size() < 1) {
-						scores = new ArrayList<Integer>(myScore.size());
-						for (int i = 0; i < myScore.size(); i++) scores.add(0);
+						scores = new ArrayList(myScore.size());
+						for (int i = 0; i < myScore.size(); i++) scores.add(new Integer(0));
 					}
 					// add it up!
 					for (int i = 0; i < myScore.size() && i < scores.size(); i++)
-						scores.set(i, scores.get(i) + myScore.getScoreAt(i));
+						scores.set(i, new Integer(((Integer)scores.get(i)).intValue() +
+							myScore.getScoreAt(i)));
 				}
 				if (side) {
 					teamPoints += match.getRedScore();
@@ -460,7 +462,8 @@ public class Team implements Comparable<Team>, java.io.Serializable {
 				if (myScore != null && ((!side && diff > 0) || (side && diff < 0))) {
 					// penalty points for RP
 					for (int i = 0; i < ScheduleItem.TPA; i++)
-						rp += 10 * sc.get(i + (side ? ScheduleItem.TPA : 0)).getPenaltyCount();
+						rp += 10 * ((Score)sc.get(i + (side ? ScheduleItem.TPA : 0)))
+							.getPenaltyCount();
 				}
 			}
 		}

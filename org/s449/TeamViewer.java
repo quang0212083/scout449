@@ -36,7 +36,7 @@ public class TeamViewer extends BasicDialog {
 	/**
 	 * The working comments list.
 	 */
-	private List<Comment> comments;
+	private List comments;
 	/**
 	 * The team name.
 	 */
@@ -80,11 +80,11 @@ public class TeamViewer extends BasicDialog {
 	/**
 	 * The allowable robot types.
 	 */
-	private List<String> robotTypes;
+	private List robotTypes;
 	/**
 	 * The UDF field names.
 	 */
-	private List<UDF> udfNames;
+	private List udfNames;
 	/**
 	 * The team's image.
 	 */
@@ -96,7 +96,7 @@ public class TeamViewer extends BasicDialog {
 	/**
 	 * The cached thumbnails.
 	 */
-	private Map<Integer, ImageIcon> cache;
+	private Map cache;
 	/**
 	 * The model for the robot types box.
 	 */
@@ -112,7 +112,7 @@ public class TeamViewer extends BasicDialog {
 	/**
 	 * The list of text areas.
 	 */
-	private List<VisualComment> vComments;
+	private List vComments;
 	/**
 	 * The event listener.
 	 */
@@ -134,13 +134,13 @@ public class TeamViewer extends BasicDialog {
 	public TeamViewer(ScoutStatus status) {
 		super(status);
 		thumbs = new ThumbnailThread();
-		cache = new HashMap<Integer, ImageIcon>(100);
-		robotTypes = new ArrayList<String>(10);
-		udfNames = new ArrayList<UDF>(10);
+		cache = new HashMap(100);
+		robotTypes = new ArrayList(10);
+		udfNames = new ArrayList(10);
 		// initialize
 		team = null;
-		comments = new ArrayList<Comment>(20);
-		vComments = new ArrayList<VisualComment>(20);
+		comments = new ArrayList(20);
+		vComments = new ArrayList(20);
 		events = new LocalEventListener();
 		wl = new EscapeKeyListener(window);
 		JPanel layout = new JPanel(new BorderLayout());
@@ -158,7 +158,8 @@ public class TeamViewer extends BasicDialog {
 		teamName.setAlignmentY(JComponent.CENTER_ALIGNMENT);
 		// label for team name
 		c.add(teamName, BorderLayout.NORTH);
-		JComponent vert = new Box(BoxLayout.Y_AXIS);
+		JComponent vert = new JPanel();
+		vert.setLayout(new BoxLayout(vert, BoxLayout.Y_AXIS));
 		image = new JLabel();
 		image.setHorizontalAlignment(SwingConstants.CENTER);
 		image.setVerticalAlignment(SwingConstants.CENTER);
@@ -171,7 +172,8 @@ public class TeamViewer extends BasicDialog {
 		image.addMouseListener(events);
 		vert.add(image);
 		vert.add(Box.createVerticalGlue());
-		JComponent horiz = new Box(BoxLayout.X_AXIS);
+		JComponent horiz = new JPanel();
+		horiz.setLayout(new BoxLayout(horiz, BoxLayout.X_AXIS));
 		horiz.add(Box.createHorizontalStrut(10));
 		horiz.add(vert);
 		horiz.add(Box.createHorizontalStrut(10));
@@ -227,13 +229,11 @@ public class TeamViewer extends BasicDialog {
 		JButton close = new JButton("Close");
 		close.setActionCommand("close");
 		close.addActionListener(events);
-		close.setFocusable(false);
 		close.setMnemonic(KeyEvent.VK_C);
 		// add/edit button
 		JButton addedit = new JButton("Add/Edit");
 		addedit.setActionCommand("edit");
 		addedit.addActionListener(events);
-		addedit.setFocusable(false);
 		addedit.setMnemonic(KeyEvent.VK_E);
 		// add it up!
 		horiz = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
@@ -295,13 +295,13 @@ public class TeamViewer extends BasicDialog {
 		commentsList.add(matches);
 		vComments.clear();
 		if (comments.size() > 0) {
-			Iterator<Comment> it = comments.iterator();
+			Iterator it = comments.iterator();
 			int index = 0;
 			Comment c; Container pane; JLabel lbl; JButton edit;
 			JTextArea area; StarRating star; JTable table; UDFModel mode;
 			JScrollPane vp; Font f; JComponent pnl;
 			while (it.hasNext()) {
-				c = it.next();
+				c = (Comment)it.next();
 				// expandable panel with owner, stars, and team num as title
 				ExpandablePanel ex = new ExpandablePanel(status);
 				pane = ex.getTitlePane();
@@ -314,7 +314,6 @@ public class TeamViewer extends BasicDialog {
 				if (isEditable(c)) {
 					// edit button
 					edit = new JButton("Edit");
-					edit.setFocusable(false);
 					edit.addActionListener(new EditListener(index));
 					edit.setActionCommand("edit");
 					edit.setOpaque(false);
@@ -520,13 +519,13 @@ public class TeamViewer extends BasicDialog {
 	private void startEditing(int index) {
 		if (team == null || index < 0 || index >= comments.size()) return;
 		// check if it's yours or admin
-		Comment cc = comments.get(index);
+		Comment cc = (Comment)comments.get(index);
 		if (isEditable(cc)) {
 			AppLib.printDebug("Starting editing@" + index);
 			// ok
 			if (current != null) stopEditing();
 			current = cc;
-			VisualComment vis = vComments.get(index);
+			VisualComment vis = (VisualComment)vComments.get(index);
 			vis.panel.setOpen(true);
 			AppLib.sleep(1L);
 			vis.text.setEditable(true);
@@ -576,14 +575,14 @@ public class TeamViewer extends BasicDialog {
 	 * 
 	 * @return the UDF field names as a List
 	 */
-	public List<UDF> getUDFNames() {
+	public List getUDFNames() {
 		return udfNames;
 	}
 	/**
 	 * Reloads the team thumbnail image.
 	 */
 	private void reImage() {
-		if (image != null) image.setIcon(cache.get(team.getNumber()));
+		if (image != null) image.setIcon((ImageIcon)cache.get(new Integer(team.getNumber())));
 	}
 	/**
 	 * Shows the big image.
@@ -615,10 +614,10 @@ public class TeamViewer extends BasicDialog {
 			while (teamNum >= 0) {
 				synchronized (this) {
 					if (teamNum > 0) try {
-						if (!cache.containsKey(teamNum)) {
+						if (!cache.containsKey(new Integer(teamNum))) {
 							icon = new ImageIcon(new URL("http://" + status.getRemoteHost() + ":" +
 								status.getClient().getWebPort() + "/thumbnail?team=" + teamNum));
-							if (icon.getImage() != null) cache.put(teamNum, icon);
+							if (icon.getImage() != null) cache.put(new Integer(teamNum), icon);
 						}
 						reImage();
 					} catch (Exception e) {
@@ -694,15 +693,15 @@ public class TeamViewer extends BasicDialog {
 				AppLib.printDebug("Add/edit comment");
 				int ind = -1;
 				for (int i = 0; i < comments.size(); i++)
-					if (comments.get(i).getOwner().equals(status.getUser())) {
+					if (((Comment)comments.get(i)).getOwner().equals(status.getUser())) {
 						ind = i;
 						break;
 					}
 				if (ind < 0) {
 					// add
-					List<Integer> list = new ArrayList<Integer>(udfNames.size());
+					List list = new ArrayList(udfNames.size());
 					for (int i = 0; i < udfNames.size(); i++)
-						list.add(0);
+						list.add(new Integer(0));
 					comments.add(new Comment(status.getUser(), null, "", 0, list,
 						status.getClient().getTime()));
 					buildComments();
@@ -737,7 +736,7 @@ public class TeamViewer extends BasicDialog {
 		/**
 		 * The data list to use.
 		 */
-		private List<Integer> myData;
+		private List myData;
 
 		/**
 		 * Creates a new UDF model.
@@ -754,7 +753,7 @@ public class TeamViewer extends BasicDialog {
 		 * @param edit whether editing is allowed
 		 * @param myData the UDF data to read
 		 */
-		public UDFModel(boolean edit, List<Integer> myData) {
+		public UDFModel(boolean edit, List myData) {
 			this(edit);
 			this.myData = myData;
 		}
@@ -763,7 +762,7 @@ public class TeamViewer extends BasicDialog {
 		 * 
 		 * @param myData the new data to display
 		 */
-		public void setData(List<Integer> myData) {
+		public void setData(List myData) {
 			this.myData = myData;
 		}
 		/**
@@ -784,8 +783,8 @@ public class TeamViewer extends BasicDialog {
 				return udfNames.get(row);
 			else if (col == 1) {
 				// based on type
-				int val = myData.get(row);
-				int type = udfNames.get(row).getType();
+				int val = ((Integer)myData.get(row)).intValue();
+				int type = ((UDF)udfNames.get(row)).getType();
 				if (val == 0 && type == UDF.BOOL)
 					return "No";
 				else if (val == 1 && type == UDF.BOOL)
@@ -811,7 +810,7 @@ public class TeamViewer extends BasicDialog {
 				return;
 			try {
 				int x = Integer.parseInt(obj.toString());
-				int type = udfNames.get(row).getType();
+				int type = ((UDF)udfNames.get(row)).getType();
 				if (type == UDF.RATE10 && (x < 0 || x > 10)) {
 					AppLib.printWarn(window, "This field must be a rating from 0 to 10.");
 					return;
@@ -819,7 +818,7 @@ public class TeamViewer extends BasicDialog {
 					AppLib.printWarn(window, "This field must be either 0 or 1.");
 					return;
 				}
-				myData.set(row, x);
+				myData.set(row, new Integer(x));
 			} catch (Exception e) {
 				AppLib.printWarn(window, "This field must be an integer.");
 				return;

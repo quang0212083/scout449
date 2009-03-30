@@ -5,7 +5,7 @@ package org.s449;
  * 
  * @author Stephen Carlson
  */
-public class UDF implements java.io.Serializable, Comparable<UDF> {
+public class UDF implements java.io.Serializable, Comparable {
 	private static final long serialVersionUID = 4321978342178349874L;
 
 	/**
@@ -62,7 +62,9 @@ public class UDF implements java.io.Serializable, Comparable<UDF> {
 	public int hashCode() {
 		return name.hashCode() + type;
 	}
-	public int compareTo(UDF other) {
+	public int compareTo(Object o) {
+		if (!(o instanceof UDF)) return 0;
+		UDF other = (UDF)o;
 		return name.compareTo(other.getName());
 	}
 	public String toString() {

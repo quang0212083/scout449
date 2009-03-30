@@ -77,7 +77,7 @@ public class STabbedPaneUI extends BasicTabbedPaneUI {
 	protected void paintTabBackground(Graphics g, int tabPlacement,
 			int tabIndex, int x, int y, int w, int h, boolean isSelected) {
 		if (paint == null)
-			paint = new GradientPaint(0, y + h + 2, Color.WHITE, 0, y,
+			paint = new GradientPaint(0, y + h + 2, Constants.WHITE, 0, y,
 				new Color(192, 192, 192));
 		GeneralPath path = new GeneralPath(GeneralPath.WIND_NON_ZERO);
 		path.moveTo(x - 2, y + h + 2);
@@ -91,6 +91,7 @@ public class STabbedPaneUI extends BasicTabbedPaneUI {
 		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g2d.setPaint(paint);
 		g2d.fill(path);
+		paintTabArea(g, tabPlacement, 0);
 	}
 	protected int getTabLabelShiftY(int tabPlacement, int tabIndex,
 			boolean isSelected) {
@@ -113,7 +114,6 @@ public class STabbedPaneUI extends BasicTabbedPaneUI {
 		g2d.setPaintMode();
 		g2d.fillRect(0, 0, tabPane.getWidth(), rects[selectedIndex].height + 4);
 		g2d.setComposite(composite);
-		super.paintTabArea(g, tabPlacement, selectedIndex);
 	}
 	protected int calculateTabWidth(int tabPlacement, int tabIndex, FontMetrics metrics) {
 		return super.calculateTabWidth(tabPlacement, tabIndex, boldFontMetrics) + 4;

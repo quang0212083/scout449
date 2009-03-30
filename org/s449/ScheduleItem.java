@@ -9,7 +9,7 @@ import java.text.*;
  * @author Stephen Carlson
  * @version 4.0.0
  */
-public class ScheduleItem implements Comparable<ScheduleItem>, java.io.Serializable, Constants {
+public class ScheduleItem implements Comparable, java.io.Serializable, Constants {
 	private static final long serialVersionUID = 5321978342178349873L;
 	/**
 	 * The 12-hour time format.
@@ -43,11 +43,11 @@ public class ScheduleItem implements Comparable<ScheduleItem>, java.io.Serializa
 	/**
 	 * The teams in this match.
 	 */
-	private List<Integer> teams;
+	private List teams;
 	/**
 	 * The scores of the teams.
 	 */
-	private List<Score> scores;
+	private List scores;
 	/**
 	 * The score of the #1 alliance.
 	 */
@@ -87,7 +87,7 @@ public class ScheduleItem implements Comparable<ScheduleItem>, java.io.Serializa
 	 * @param newTeams the teams in this match
 	 * @param timeAt the time
 	 */
-	public ScheduleItem(List<Integer> newTeams, long timeAt, boolean counts) {
+	public ScheduleItem(List newTeams, long timeAt, boolean counts) {
 		teams = newTeams; time = timeAt;
 		twoScore = oneScore = num = 0;
 		scores = null; label = MatchLabel.blank;
@@ -103,16 +103,16 @@ public class ScheduleItem implements Comparable<ScheduleItem>, java.io.Serializa
 	 */
 	public static ScheduleItem copyValue(ScheduleItem sc) {
 		// copy teams
-		List<Integer> nt = new ArrayList<Integer>(sc.getTeams().size());
+		List nt = new ArrayList(sc.getTeams().size());
 		nt.addAll(sc.getTeams());
-		List<Score> scores;
+		List scores;
 		// copy scores
 		if (sc.getScores() == null) scores = null;
 		else {
-			scores = new ArrayList<Score>(TPA * 2 + 1);
-			Iterator<Score> it = sc.getScores().iterator();
+			scores = new ArrayList(TPA * 2 + 1);
+			Iterator it = sc.getScores().iterator();
 			while (it.hasNext())
-				scores.add(Score.copyValueOf(it.next()));
+				scores.add(Score.copyValueOf((Score)it.next()));
 		}
 		// create item
 		ScheduleItem n = new ScheduleItem(nt, sc.getTime(), sc.counts());
@@ -123,7 +123,8 @@ public class ScheduleItem implements Comparable<ScheduleItem>, java.io.Serializa
 		n.setRedScore(sc.getRedScore());
 		n.setBlueScore(sc.getBlueScore());
 		n.setNum(sc.getNum());
-		n.getSurrogate().clear();
+		for (int i = 0; i < 2 * TPA; i++)
+			n.getSurrogate().clear(i);
 		n.getSurrogate().or(sc.getSurrogate());
 		return n;
 	}
@@ -148,11 +149,15 @@ public class ScheduleItem implements Comparable<ScheduleItem>, java.io.Serializa
 	 * 
 	 * @return the list of team numbers in this match
 	 */
-	public List<Integer> getTeams() {
+	public List getTeams() {
 		return teams;
 	}
-	public int compareTo(ScheduleItem other) {
-		return (int)Math.signum(time - other.time);
+	public int compareTo(Object o) {
+		if (!(o instanceof ScheduleItem)) return 0;
+		ScheduleItem other = (ScheduleItem)o;
+		if (time > other.time) return 1;
+		if (time < other.time) return -1;
+		return 0;
 	}
 	public boolean equals(Object other) {
 		if (!(other instanceof ScheduleItem)) return false;
@@ -271,7 +276,7 @@ public class ScheduleItem implements Comparable<ScheduleItem>, java.io.Serializa
 	 * 
 	 * @return the scores of this match
 	 */
-	public List<Score> getScores() {
+	public List getScores() {
 		return scores;
 	}
 	/**
@@ -279,7 +284,7 @@ public class ScheduleItem implements Comparable<ScheduleItem>, java.io.Serializa
 	 * 
 	 * @param scores the new list of scores
 	 */
-	public void setScores(List<Score> scores) {
+	public void setScores(List scores) {
 		this.scores = scores;
 	}
 	/**
@@ -319,7 +324,7 @@ public class ScheduleItem implements Comparable<ScheduleItem>, java.io.Serializa
 	 * 
 	 * @param teams the new list of teams
 	 */
-	public void setTeams(List<Integer> teams) {
+	public void setTeams(List teams) {
 		this.teams = teams;
 	}
 	/**

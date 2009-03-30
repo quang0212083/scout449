@@ -4,7 +4,7 @@ import org.s449.*;
 import java.awt.event.*;
 import java.util.*;
 
-public class TeamTextField extends AutoTextField<Team> {
+public class TeamTextField extends AutoTextField {
 	private static final long serialVersionUID = 0L;
 
 	/**
@@ -27,7 +27,7 @@ public class TeamTextField extends AutoTextField<Team> {
 		}
 	}
 
-	public TeamTextField(ScoutStatus stat, List<Team> list) {
+	public TeamTextField(ScoutStatus stat, List list) {
 		super(list);
 		setColumns(5);
 		status = stat;
@@ -37,9 +37,9 @@ public class TeamTextField extends AutoTextField<Team> {
 	}
 	protected String getMatch(String s) {
 		if (s.length() < 1) return null;
-		Iterator<Team> it = dataList.iterator();
+		Iterator it = dataList.iterator();
 		while (it.hasNext()) {
-			String s1 = Integer.toString(it.next().getNumber());
+			String s1 = Integer.toString(((Team)it.next()).getNumber());
 			if (s1 != null && s1.startsWith(s))
 				return s1;
 		}

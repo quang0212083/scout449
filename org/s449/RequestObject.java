@@ -131,7 +131,7 @@ public class RequestObject implements Requestable {
 	 * @param match the match list to add
 	 * @return a request object to execute the command
 	 */
-	public static RequestObject matchAdd(Collection<ScheduleItem> match) {
+	public static RequestObject matchAdd(Collection match) {
 		RequestObject r = new RequestObject(ADDMATCH, null, 0, 0);
 		r.obj = match;
 		return r;
@@ -192,7 +192,7 @@ public class RequestObject implements Requestable {
 	 * @param toDel the match to remove
 	 * @return a request object to execute the command
 	 */
-	public static RequestObject matchDel(Collection<ScheduleItem> toDel) {
+	public static RequestObject matchDel(Collection toDel) {
 		RequestObject r = new RequestObject(DELMATCH, null, 0, 0);
 		r.obj = toDel;
 		return r;
@@ -252,7 +252,7 @@ public class RequestObject implements Requestable {
 	 */
 	public static RequestObject udf(int team, int field, int value) {
 		RequestObject r = new RequestObject(UDF, null, field, team);
-		r.obj = value;
+		r.obj = new Integer(value);
 		return r;
 	}
 	/**

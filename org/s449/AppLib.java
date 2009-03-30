@@ -4,7 +4,6 @@ package org.s449;
  */
 
 import java.awt.Component;
-import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.io.*;
 import java.text.DateFormat;
@@ -32,7 +31,7 @@ public class AppLib {
 	/**
 	 * Whether the user interface is headless (text-only)
 	 */
-	private static final boolean headless = GraphicsEnvironment.isHeadless();
+	private static final boolean headless = false;
 	/**
 	 * Constant indicating all messages.
 	 */
@@ -274,7 +273,7 @@ public class AppLib {
 	public static boolean setOutputStream(File file) {
 		try {
 			sysOut = new PrintWriter(new BufferedWriter(
-				new FileWriter(file, true)));
+				new FileWriter(file)));
 			return true;
 		} catch (Exception e) {
 			return false;
@@ -300,8 +299,8 @@ public class AppLib {
 	 * @return a HashMap object mapping a String with the name of the key
 	 *  to a String with the value, or an empty map with no arguments.
 	 */
-	public static HashMap<String, String> parseCommandLine(String[] args) {
-		HashMap<String, String> data = new HashMap<String, String>();
+	public static HashMap parseCommandLine(String[] args) {
+		HashMap data = new HashMap();
 		if (args.length < 1) return data;
 		StringBuffer files = new StringBuffer(128);
 		for (int i = 0; i < args.length; i++) {
@@ -323,7 +322,7 @@ public class AppLib {
 				files.append(arg + " ");
 		}
 		data.put("", files.toString().trim());
-		String d = data.get("--debug");
+		String d = (String)data.get("--debug");
 		if (d != null) {
 			if (d.length() > 0)
 				try {
@@ -337,7 +336,7 @@ public class AppLib {
 				setDebugLevel(AppLib.ALL);
 		}
 		if (data.containsKey("--quiet")) setDebugLevel(AppLib.NONE);
-		d = data.get("--log");
+		d = (String)data.get("--log");
 		if (d != null) {
 			if (d.length() < 1 || d.equals("-"))
 				setOutputStream(System.out);

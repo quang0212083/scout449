@@ -44,7 +44,6 @@ public class ButtonFactory {
 		but.setBorder(blackBorder);
 		if (mn > 0) but.setMnemonic(mn);
 		but.setBackground(Constants.LIGHT_BLUE_UI);
-		but.setFocusable(false);
 		but.setActionCommand(action);
 		but.addActionListener(evt);
 		return but;
@@ -65,7 +64,6 @@ public class ButtonFactory {
 		but.setUI(new BasicButtonUI());
 		but.setBackground(Constants.LIGHT_BLUE_UI);
 		but.setBorder(blackBorder);
-		but.setFocusable(false);
 		but.setActionCommand(action);
 		but.addActionListener(evt);
 		if (size != null) {

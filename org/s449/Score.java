@@ -9,7 +9,7 @@ import java.util.*;
  * @author Stephen Carlson
  * @version 1.0.0
  */
-public class Score implements java.io.Serializable, Comparable<Score> {
+public class Score implements java.io.Serializable, Comparable {
 	private static final long serialVersionUID = 5321978342178349876L;
 
 	/**
@@ -29,7 +29,7 @@ public class Score implements java.io.Serializable, Comparable<Score> {
 	/**
 	 * The list of scores. Note that this is specific to a hot key list.
 	 */
-	private List<Integer> scores;
+	private List scores;
 	/**
 	 * The cached score total.
 	 */
@@ -51,9 +51,9 @@ public class Score implements java.io.Serializable, Comparable<Score> {
 	 */
 	public Score(int[] multiply) {
 		this.multiply = multiply;
-		scores = new ArrayList<Integer>(multiply.length + 1);
+		scores = new ArrayList(multiply.length + 1);
 		for (int i = 0; i < multiply.length; i++)
-			scores.add(0);
+			scores.add(new Integer(0));
 		ts = pen = 0;
 	}
 	/**
@@ -79,14 +79,14 @@ public class Score implements java.io.Serializable, Comparable<Score> {
 	 * @return the score
 	 */
 	public int getScoreAt(int index) {
-		return scores.get(index);
+		return ((Integer)scores.get(index)).intValue();
 	}
 	/**
 	 * Gets an iterator over the scores.
 	 * 
 	 * @return the iterator
 	 */
-	public Iterator<Integer> iterator() {
+	public Iterator iterator() {
 		return Collections.unmodifiableList(scores).iterator();
 	}
 	/**
@@ -96,7 +96,7 @@ public class Score implements java.io.Serializable, Comparable<Score> {
 	 * @return the score times the multiplier
 	 */
 	public int getMultipliedScoreAt(int index) {
-		return scores.get(index) * multiply[index];
+		return ((Integer)scores.get(index)).intValue() * multiply[index];
 	}
 	/**
 	 * Changes the score at the specified index.
@@ -106,7 +106,7 @@ public class Score implements java.io.Serializable, Comparable<Score> {
 	 */
 	public void setScoreAt(int index, int score) {
 		ts -= getMultipliedScoreAt(index);
-		scores.set(index, score);
+		scores.set(index, new Integer(score));
 		ts += score * multiply[index];
 	}
 	/**
@@ -155,11 +155,14 @@ public class Score implements java.io.Serializable, Comparable<Score> {
 	public String toString() {
 		return Integer.toString(ts);
 	}
-	public int compareTo(Score other) {
+	public int compareTo(Object o) {
+		if (!(o instanceof Score)) return 0;
+		Score other = (Score)o;
 		int val = scores.size() - other.scores.size();
 		if (val != 0) return val;
 		for (int i = 0; i < scores.size(); i++) {
-			val = scores.get(i) - other.scores.get(i);
+			val = ((Integer)scores.get(i)).intValue() -
+				((Integer)other.scores.get(i)).intValue();
 			if (val != 0) return val;
 		}
 		return other.ts - ts;

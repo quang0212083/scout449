@@ -12,7 +12,7 @@ import javax.swing.*;
  * @author Stephen Carlson
  * @version 1.0
  */
-public class EditableList<E> extends JPanel {
+public class EditableList extends JPanel {
 	private static final long serialVersionUID = 0L;
 
 	/**
@@ -26,7 +26,7 @@ public class EditableList<E> extends JPanel {
 	/**
 	 * The action listeners.
 	 */
-	protected List<ActionListener> listeners;
+	protected List listeners;
 	/**
 	 * The add button.
 	 */
@@ -48,7 +48,7 @@ public class EditableList<E> extends JPanel {
 		list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 		list.addKeyListener(events);
 		list.setPrototypeCellValue("00000000000000000000000000000");
-		listeners = new ArrayList<ActionListener>(5);
+		listeners = new ArrayList(5);
 		add(new JScrollPane(list), BorderLayout.CENTER);
 		JComponent buttons = new JPanel(new VerticalFlow(false));
 		add = new JButton();
@@ -71,7 +71,7 @@ public class EditableList<E> extends JPanel {
 	 * 
 	 * @param item the item to be added
 	 */
-	public void addItem(E item) {
+	public void addItem(Object item) {
 		model.addItem(item);
 	}
 	/**
@@ -94,7 +94,7 @@ public class EditableList<E> extends JPanel {
 	 * 
 	 * @param list the new list
 	 */
-	public void setList(List<E> list) {
+	public void setList(List list) {
 		model.setList(list);
 	}
 	/**
@@ -110,7 +110,7 @@ public class EditableList<E> extends JPanel {
 	 * 
 	 * @return the list of values
 	 */
-	public List<E> getList() {
+	public List getList() {
 		return model.getList();
 	}
 	/**
@@ -146,9 +146,9 @@ public class EditableList<E> extends JPanel {
 		add.setActionCommand(command);
 	}
 	protected void fireAddListener(ActionEvent e) {
-		Iterator<ActionListener> it = listeners.iterator();
+		Iterator it = listeners.iterator();
 		while (it.hasNext())
-			it.next().actionPerformed(e);
+			((ActionListener)it.next()).actionPerformed(e);
 	}
 
 	/**
@@ -178,13 +178,13 @@ public class EditableList<E> extends JPanel {
 		/**
 		 * The object list to be edited.
 		 */
-		private List<E> objects;
+		private List objects;
 
 		/**
 		 * Creates a new editable list model with a blank list.
 		 */
 		public EditableListModel() {
-			objects = new ArrayList<E>();
+			objects = new ArrayList();
 		}
 		/**
 		 * Changes the list of items. The list is copied.
@@ -192,12 +192,12 @@ public class EditableList<E> extends JPanel {
 		 * @param newList the new list of items. May be null,
 		 *  but this will disable adding and removing.
 		 */
-		public void setList(List<E> newList) {
+		public void setList(List newList) {
 			if (newList == null) {
 				objects = null;
 				fireContentsChanged(0, 0);
 			} else {
-				objects = new ArrayList<E>(newList);
+				objects = new ArrayList(newList);
 				fireContentsChanged(0, objects.size());
 			}
 		}
@@ -206,7 +206,7 @@ public class EditableList<E> extends JPanel {
 		 * 
 		 * @return the list of items
 		 */
-		public List<E> getList() {
+		public List getList() {
 			return objects;
 		}
 		/**
@@ -224,7 +224,7 @@ public class EditableList<E> extends JPanel {
 		 * 
 		 * @param item the item to add
 		 */
-		public void addItem(E item) {
+		public void addItem(Object item) {
 			if (objects != null) {
 				objects.add(item);
 				fireIntervalAdded(objects.size() - 1);

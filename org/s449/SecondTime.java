@@ -6,7 +6,7 @@ package org.s449;
  * @author Stephen Carlson
  * @version 1.0.0
  */
-public class SecondTime implements java.io.Serializable, Comparable<SecondTime> {
+public class SecondTime implements java.io.Serializable, Comparable {
 	private static final long serialVersionUID = 4321978342178349870L;
 
 	/**
@@ -36,7 +36,9 @@ public class SecondTime implements java.io.Serializable, Comparable<SecondTime> 
 		if (o == null || !(o instanceof SecondTime)) return false;
 		return ((SecondTime)o).t1000 == t1000;
 	}
-	public int compareTo(SecondTime o) {
+	public int compareTo(Object other) {
+		if (!(other instanceof SecondTime)) return 0;
+		SecondTime o = (SecondTime)other;
 		if (o == null) return -1;
 		long diff = t1000 - o.t1000;
 		if (diff < 0L) return -1;

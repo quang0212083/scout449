@@ -3,7 +3,6 @@ package org.s449.ui;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-
 import org.s449.*;
 
 /**
@@ -46,8 +45,9 @@ public class ExpandablePanel extends JPanel implements ActionListener {
 		open = true;
 		status = stat;
 		setBackground(Constants.WHITE);
-		JComponent horiz = new Box(BoxLayout.X_AXIS);
-		horiz.setOpaque(false);
+		JComponent horiz = new JPanel();
+		horiz.setLayout(new BoxLayout(horiz, BoxLayout.X_AXIS));
+		horiz.setBackground(Constants.WHITE);
 		title = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		title.setOpaque(false);
 		content = new JPanel(new BorderLayout());
@@ -66,11 +66,11 @@ public class ExpandablePanel extends JPanel implements ActionListener {
 		horiz.add(plusMinus);
 		horiz.add(title);
 		add(horiz);
-		horiz = new Box(BoxLayout.X_AXIS);
+		Box h2 = new Box(BoxLayout.X_AXIS);
 		content.setBorder(BorderFactory.createCompoundBorder(ButtonFactory.getThinBorder(),
 			BorderFactory.createEmptyBorder(10, 10, 10, 10)));
-		horiz.add(content);
-		add(horiz);
+		h2.add(content);
+		add(h2);
 		update();
 		validate();
 	}

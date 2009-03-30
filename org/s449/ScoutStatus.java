@@ -37,7 +37,7 @@ public class ScoutStatus {
 	/**
 	 * The action listeners registered to fire on status changes.
 	 */
-	private List<ActionListener> listeners;
+	private List listeners;
 	/**
 	 * The instance's client.
 	 */
@@ -80,7 +80,7 @@ public class ScoutStatus {
 		localTransfer = false;
 		connected = false;
 		remoteHost = null;
-		listeners = new LinkedList<ActionListener>();
+		listeners = new LinkedList();
 		client = new Client(this);
 		server = new Server(this);
 		transfer = new Transfer(this);
@@ -265,9 +265,9 @@ public class ScoutStatus {
 	 */
 	private void fireActionEvent(String message) {
 		ActionEvent e = new ActionEvent(mainWin, ActionEvent.ACTION_PERFORMED, message);
-		Iterator<ActionListener> it = listeners.iterator();
+		Iterator it = listeners.iterator();
 		while (it.hasNext())
-			it.next().actionPerformed(e);
+			((ActionListener)it.next()).actionPerformed(e);
 	}
 	/**
 	 * Shows or hides the client. Fires an action event.

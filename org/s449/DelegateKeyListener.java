@@ -2,6 +2,7 @@ package org.s449;
 
 import java.awt.event.*;
 import java.awt.*;
+import java.util.EventListener;
 
 /**
  * A class that delegates key events to another component.
@@ -41,10 +42,10 @@ public class DelegateKeyListener extends KeyAdapter {
 	}
 	public void keyTyped(KeyEvent e) {
 		if (filter == null || filter.indexOf(e.getKeyChar()) >= 0) {
-			KeyListener[] toFire = target.getKeyListeners();
+			EventListener[] toFire = target.getListeners(KeyListener.class);
 			if (toFire != null)
 				for (int i = 0; i < toFire.length; i++)
-					toFire[i].keyTyped(e);
+					((KeyListener)toFire[i]).keyTyped(e);
 		}
 	}
 }

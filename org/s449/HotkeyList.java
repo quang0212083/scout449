@@ -24,13 +24,13 @@ public class HotkeyList implements java.io.Serializable {
 	/**
 	 * The list of hotkeys. This is a little bit inefficient...
 	 */
-	private List<Hotkey> list;
+	private List list;
 
 	/**
 	 * Creates a hotkey list with nothing but the penalty hotkey.
 	 */
 	public HotkeyList() {
-		list = new ArrayList<Hotkey>(10);
+		list = new ArrayList(10);
 	}
 	/**
 	 * Checks to see if any user hotkeys (excluding the penalty hotkey) are in the map.
@@ -45,7 +45,7 @@ public class HotkeyList implements java.io.Serializable {
 	 * 
 	 * @return the hotkey list
 	 */
-	public List<Hotkey> getList() {
+	public List getList() {
 		return list;
 	}
 	/**
@@ -55,10 +55,10 @@ public class HotkeyList implements java.io.Serializable {
 	 * @return the point value, or 0 if no such
 	 */
 	public int getPointValue(char hotkey) {
-		Iterator<Hotkey> it = list.iterator();
+		Iterator it = list.iterator();
 		Hotkey item;
 		while (it.hasNext()) {
-			item = it.next();
+			item = (Hotkey)it.next();
 			if (hotkey == item.getKeyChar())
 				return item.getPointValue();
 		}
@@ -71,10 +71,10 @@ public class HotkeyList implements java.io.Serializable {
 	 * @return the description, or "" if no such
 	 */
 	public String getDescription(char hotkey) {
-		Iterator<Hotkey> it = list.iterator();
+		Iterator it = list.iterator();
 		Hotkey item;
 		while (it.hasNext()) {
-			item = it.next();
+			item = (Hotkey)it.next();
 			if (hotkey == item.getKeyChar())
 				return item.getDescription();
 		}
@@ -85,7 +85,7 @@ public class HotkeyList implements java.io.Serializable {
 	 * 
 	 * @param hotkeys the hotkey list
 	 */
-	public void setList(List<Hotkey> hotkeys) {
+	public void setList(List hotkeys) {
 		list.clear();
 		list.addAll(hotkeys);
 	}
@@ -96,11 +96,11 @@ public class HotkeyList implements java.io.Serializable {
 	 * @return the index
 	 */
 	public int indexOf(char hotkey) {
-		Iterator<Hotkey> it = list.iterator();
+		Iterator it = list.iterator();
 		Hotkey item;
 		int i = 0;
 		while (it.hasNext()) {
-			item = it.next();
+			item = (Hotkey)it.next();
 			if (hotkey == item.getKeyChar())
 				return i;
 			i++;
@@ -114,10 +114,10 @@ public class HotkeyList implements java.io.Serializable {
 	 */
 	public int[] toScoreArray() {
 		int[] scores = new int[size()];
-		Iterator<Hotkey> it = list.iterator();
+		Iterator it = list.iterator();
 		int i = 0;
 		while (it.hasNext()) {
-			scores[i] = it.next().getPointValue();
+			scores[i] = ((Hotkey)it.next()).getPointValue();
 			i++;
 		}
 		return scores;
@@ -132,7 +132,7 @@ public class HotkeyList implements java.io.Serializable {
 	}
 	public String toString() {
 		String output = "";
-		Iterator<Hotkey> it = list.iterator();
+		Iterator it = list.iterator();
 		while (it.hasNext())
 			output += it.next() + "   ";
 		return output.trim();

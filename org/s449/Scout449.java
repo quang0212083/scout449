@@ -45,7 +45,7 @@ public class Scout449 {
 	/**
 	 * The icon cache.
 	 */
-	private Map<String, ImageIcon> icons;
+	private Map icons;
 	/**
 	 * The digit images (separate!)
 	 */
@@ -53,7 +53,7 @@ public class Scout449 {
 	/**
 	 * The command line.
 	 */
-	private Map<String, String> cmdLine;
+	private Map cmdLine;
 	/**
 	 * More command line.
 	 */
@@ -80,7 +80,7 @@ public class Scout449 {
 	public Scout449(String[] cmdArgs) {
 		// parse command line and save it away
 		cmdLine = AppLib.parseCommandLine(cmdArgs);
-		noCmd = cmdLine.get("");
+		noCmd = (String)cmdLine.get("");
 		if (noCmd == null) noCmd = "";
 		if (cmdLine.containsKey("-v") || noCmd.indexOf("-v") >= 0) {
 			System.out.println(Constants.VERSION_FULL);
@@ -200,7 +200,7 @@ public class Scout449 {
 	public ImageIcon getIcon(String name) {
 		if (!icons.containsKey(name))
 			loadImage(name);
-		return icons.get(name);
+		return (ImageIcon)icons.get(name);
 	}
 	/**
 	 * Loads the specified image.
@@ -232,7 +232,7 @@ public class Scout449 {
 	 * 
 	 * @return the command line arguments, or null if not run from command line
 	 */
-	public Map<String, String> getCommandLine() {
+	public Map getCommandLine() {
 		return cmdLine;
 	}
 	/**
@@ -256,9 +256,9 @@ public class Scout449 {
 	 */
 	public void start() {
 		AppLib.printDebug("Initializing");
-		icons = new HashMap<String, ImageIcon>(16);
+		icons = new HashMap(16);
 		loadImage("winicon");
-		intro = new Intro(this);
+		intro = new Intro(this, new JFrame());
 		AppLib.printDebug("Intro open");
 		NPC3.setApplicationID(3);
 		NPC3.setName("client" + Math.round(Math.random() * 1E6));

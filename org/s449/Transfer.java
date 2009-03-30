@@ -20,7 +20,7 @@ public class Transfer implements ActionListener {
 	/**
 	 * The list of port listeners.
 	 */
-	private List<PortListener> listeners;
+	private List listeners;
 	/**
 	 * Running?
 	 */
@@ -33,29 +33,29 @@ public class Transfer implements ActionListener {
 	 */
 	public Transfer(ScoutStatus stat) {
 		status = stat;
-		listeners = new LinkedList<PortListener>();
+		listeners = new LinkedList();
 		running = false;
 	}
 
 	public void start() {
 		String host = status.getRemoteHost();
-		Set<Integer> ports = new TreeSet<Integer>();
-		ports.add(Constants.WEB_PORT);
-		ports.add(Constants.BULK_PORT);
-		ports.add(Constants.CONTROL_PORT);
-		Iterator<Integer> it = ports.iterator();
+		Set ports = new TreeSet();
+		ports.add(new Integer(Constants.WEB_PORT));
+		ports.add(new Integer(Constants.BULK_PORT));
+		ports.add(new Integer(Constants.CONTROL_PORT));
+		Iterator it = ports.iterator();
 		PortListener pl;
 		while (it.hasNext()) {
-			pl = new PortListener(host, it.next());
+			pl = new PortListener(host, ((Integer)it.next()).intValue());
 			listeners.add(pl);
 			pl.start();
 		}
 		running = true;
 	}
 	public void stop() {
-		Iterator<PortListener> it = listeners.iterator();
+		Iterator it = listeners.iterator();
 		while (it.hasNext()) {
-			it.next().close();
+			((PortListener)it.next()).close();
 			it.remove();
 		}
 		running = false;

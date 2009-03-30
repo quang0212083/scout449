@@ -2,7 +2,6 @@ package org.s449;
 
 import java.util.Map;
 import java.util.Set;
-import org.s449.SecondTime;
 
 /**
  * An event is a regional (or national) with its own set of teams
@@ -11,17 +10,17 @@ import org.s449.SecondTime;
  * @author Stephen Carlson
  * @version 2.0.0
  */
-public class Event implements java.io.Serializable, Comparable<Event> {
+public class Event implements java.io.Serializable, Comparable {
 	private static final long serialVersionUID = 5321978342178349870L;
 
 	/**
 	 * Schedule of matches.
 	 */
-	private Map<SecondTime, ScheduleItem> schedule;
+	private Map schedule;
 	/**
 	 * The map of teams.
 	 */
-	private Map<Integer, Team> data;
+	private Map data;
 	/**
 	 * The regional's name code.
 	 */
@@ -65,7 +64,7 @@ public class Event implements java.io.Serializable, Comparable<Event> {
 	 * @param startDate the starting date
 	 * @param endDate the ending date
 	 */
-	public Event(Map<SecondTime, ScheduleItem> sched, Map<Integer, Team> dat, String cd,
+	public Event(Map sched, Map dat, String cd,
 			 String name, long startDate, long endDate) {
 		schedule = sched;
 		data = dat;
@@ -80,7 +79,7 @@ public class Event implements java.io.Serializable, Comparable<Event> {
 	 * 
 	 * @return the map of teams
 	 */
-	public Map<Integer, Team> getTeams() {
+	public Map getTeams() {
 		return data;
 	}
 	/**
@@ -90,14 +89,23 @@ public class Event implements java.io.Serializable, Comparable<Event> {
 	 * @return the team, or null if there is no such team
 	 */
 	public Team get(int team) {
-		return data.get(team);
+		return get(new Integer(team));
+	}
+	/**
+	 * Convenience operation to get a team.
+	 * 
+	 * @param team the team to look up
+	 * @return the team, or null if there is no such team
+	 */
+	public Team get(Integer team) {
+		return (Team)data.get(team);
 	}
 	/**
 	 * Replaces the map of teams.
 	 * 
 	 * @param data the new map of teams
 	 */
-	public void setTeams(Map<Integer, Team> data) {
+	public void setTeams(Map data) {
 		this.data = data;
 	}
 	/**
@@ -105,7 +113,7 @@ public class Event implements java.io.Serializable, Comparable<Event> {
 	 * 
 	 * @return the schedule
 	 */
-	public Map<SecondTime, ScheduleItem> getSchedule() {
+	public Map getSchedule() {
 		return schedule;
 	}
 	/**
@@ -113,7 +121,7 @@ public class Event implements java.io.Serializable, Comparable<Event> {
 	 * 
 	 * @param schedule the new schedule
 	 */
-	public void setSchedule(Map<SecondTime, ScheduleItem> schedule) {
+	public void setSchedule(Map schedule) {
 		this.schedule = schedule;
 	}
 	/**
@@ -149,7 +157,7 @@ public class Event implements java.io.Serializable, Comparable<Event> {
 	 * 
 	 * @return a Set with all of the team numbers in this event
 	 */
-	public Set<Integer> teamSet() {
+	public Set teamSet() {
 		return data.keySet();
 	}
 	/**
@@ -216,7 +224,9 @@ public class Event implements java.io.Serializable, Comparable<Event> {
 	public boolean duringRegional(long time) {
 		return startDate < time && time < endDate;
 	}
-	public int compareTo(Event other) {
+	public int compareTo(Object o) {
+		if (!(o instanceof Event)) return 0;
+		Event other = (Event)o;
 		if (equals(other)) return 0;
 		long d = other.getStartDate() - startDate;
 		if (d < 0) return -1;
