@@ -107,13 +107,11 @@ public class Scout449 {
 			return;
 		}
 		AppLib.printDebug("Contacted update server, version is " + theirVersion);
-		if (theirVersion != null && VolumeLister.versionCompare(Constants.VERSION_FULL, theirVersion)
-			< 0 && AppLib.confirm(intro, "A new version of Scout449 (" + theirVersion + ") is " +
-				"available.\nUpdate your copy now?\nClients will automatically update to the " +
-				"version on the server.")) {
-			VolumeLister.invokeJVM("-jar updater.jar \"" + updateURL + "\"");
-			System.exit(0);
-		}
+		if (theirVersion != null && VolumeLister.versionCompare(Constants.VERSION_FULL, theirVersion) < 0)
+			AppLib.confirm(intro, "A new version of Scout449 (" + theirVersion + ") is " +
+				"available.\nThe backported edition cannot be automatically updated and should " +
+				"be updated from http://code.google.com/p/scout449.\nThis version may be incompatible " +
+				"with servers running the new version.");
 	}
 	/**
 	 * Loads the programs' images.

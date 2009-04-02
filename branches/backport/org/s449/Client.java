@@ -732,14 +732,10 @@ public class Client extends JPanel implements Runnable {
 			AppLib.printDebug("Connection established");
 			wb.flush();
 			if (VolumeLister.versionCompare(Constants.VERSION_FULL, wb.getServerVersion()) < 0 &&
-					!status.isServerRunning()
-					&& AppLib.confirm(status.getWindow(), "A new version of Scout449 (" + 
-							wb.getServerVersion() + ") is available.\nUpdate now?")) {
-				// update Scout449!
-				VolumeLister.invokeJVM("-jar updater.jar \"http://" + host + ":" + webPort
-					+ "/scout449.jar\"");
-				System.exit(0);
-			}
+					!status.isServerRunning())
+				AppLib.printWarn(status.getWindow(), "A new version of Scout449 (" + 
+					wb.getServerVersion() + ") is available.\nThe backported edition may not be " +
+						"compatible with this new version.\nProceed with caution!");
 			data = wb;
 		} catch (Exception e) {
 			AppLib.debugException(e);
